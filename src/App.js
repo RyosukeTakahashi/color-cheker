@@ -17,7 +17,7 @@ import 'firebase/firestore';
 import {firebaseConfig} from './firebase/config.js';
 import panAndZoomHoc from 'react-pan-and-zoom-hoc';
 import Papa from 'papaparse';
-// import {Grid, Row, Col} from 'react-flexbox-grid';
+import {Row, Col} from 'react-flexbox-grid';
 //hand made component
 import Squares from './Squares';
 import {StyledQuestionNumberText} from './QuestionNumberText';
@@ -62,7 +62,7 @@ const AnsweringModeStr = 'Answering';
 
 const defectTypes = ['suji', 'fishEye', 'hoge', 'other'];
 const paneNames = ['leftPane', 'centerPane', 'rightPane'];
-const paneWidth = ['200px', '1fr', '320px'];
+const paneWidth = ['230px', '1fr', '350px'];
 const appLayoutGridTemplate = `
 "${paneNames.join(' ')}"
 / ${paneWidth.join(' ')}
@@ -75,6 +75,13 @@ const AppLayoutGrid = styled.div`
 
 const Pane = styled.div`
   grid-area: ${props => props.area};
+`;
+
+const LeftPane = styled(Pane)`
+  border-right-width: medium;
+  border-right-style: solid;
+  margin-right: 40px;
+  padding-right: 15px;
 `;
 
 const PannableAndZoomableHOC = panAndZoomHoc('div');
@@ -318,7 +325,7 @@ class App extends Component {
         </header>
 
         <AppLayoutGrid>
-          <Pane area='leftPane'>
+          <LeftPane area='leftPane'>
             <div>
               <FormControl component="fieldset" className="mode-select">
                 {/*<FormLabel component="legend">モード選択</FormLabel>*/}
@@ -348,44 +355,46 @@ class App extends Component {
               margin="normal"
               key='subjectId'
             />
-          </Pane>
+          </LeftPane>
           <Pane area='centerPane'>
 
-            <div style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            alignItems: 'center',
-            }}>
-            <div style={{marginRight: '146px'}}>
-            <StyledQuestionNumberText nthQuestion={this.state.nthQuestion}
-            className='styled-question-number'/>
-            <div>
-            経過時間: {this.state.timeUsed}
-            </div>
-            </div>
-            <div style={{marginRight: '10px', marginTop: '30px'}}>
-            <Button variant="contained"
-            onClick={this.handleInitializePosition}>
-            {'初期位置に戻す'}
-            </Button>
-            </div>
-            </div>
+            {/*<div style={{*/}
+            {/*display: 'flex',*/}
+            {/*justifyContent: 'flex-end',*/}
+            {/*alignItems: 'center',*/}
+            {/*}}>*/}
+            {/*<div style={{marginRight: '146px'}}>*/}
+            {/*<StyledQuestionNumberText nthQuestion={this.state.nthQuestion}*/}
+            {/*className='styled-question-number'/>*/}
+            {/*<div>*/}
+            {/*経過時間: {this.state.timeUsed}*/}
+            {/*</div>*/}
+            {/*</div>*/}
+            {/*<div style={{marginRight: '10px', marginTop: '30px'}}>*/}
+            {/*<Button variant="contained"*/}
+            {/*onClick={this.handleInitializePosition}>*/}
+            {/*{'初期位置に戻す'}*/}
+            {/*</Button>*/}
+            {/*</div>*/}
+            {/*</div>*/}
 
-            {/*<Row>*/}
-              {/*<Col>*/}
-                {/*<StyledQuestionNumberText nthQuestion={this.state.nthQuestion}*/}
-                                          {/*className='styled-question-number'/>*/}
-                {/*<div>*/}
-                  {/*経過時間: {this.state.timeUsed}*/}
-                {/*</div>*/}
-              {/*</Col>*/}
-              {/*<Col>*/}
-                {/*<Button variant="contained"*/}
-                        {/*onClick={this.handleInitializePosition}>*/}
-                  {/*{'初期位置に戻す'}*/}
-                {/*</Button>*/}
-              {/*</Col>*/}
-            {/*</Row>*/}
+            <Row>
+              <Col xsOffset={5} xs={2}>
+                <StyledQuestionNumberText nthQuestion={this.state.nthQuestion}
+                                          className='styled-question-number'/>
+                <div>
+                  経過時間: {this.state.timeUsed}
+                </div>
+              </Col>
+              <Col xsOffset={2} xs={3}>
+                <div style={{marginRight: '10px', marginTop: '30px'}}>
+                  <Button variant="contained"
+                          onClick={this.handleInitializePosition}>
+                    {'初期位置に戻す'}
+                  </Button>
+                </div>
+              </Col>
+            </Row>
 
 
             <PannableAndZoomableHOC
