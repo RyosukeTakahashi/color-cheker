@@ -10,7 +10,7 @@ const CorrectOrWrong = props => {
   );
 };
 export const StyledCorrectOrWrong = styled(CorrectOrWrong)`
-margin: 10px;
+//margin: 10px;
 color: ${props => props.isCorrect ? 'green' : 'red'};
-font-size: 18px;
+//font-size: 18px;
 `;

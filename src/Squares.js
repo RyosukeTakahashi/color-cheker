@@ -11,7 +11,7 @@ const GridLayout = styled.div`
   top: 0;
   bottom: 0;
   grid-template-columns: repeat(${(props) => props.gridLength}, 1fr);
-  background-image: url("https://dummyimage.com/${(props) => `${props.imageWidth}x${props.imageHeight}`}/a8a8a8/fff&text=img${(props) => props.nthQuestion}");
+  background-image: url("https://dummyimage.com/${(props) => `${props.imageWidth}x${props.imageHeight}`}/a8a8a8/fff&text=img${(props) => props.imgId}");
   background-repeat: no-repeat;
   background-size: cover;
 `;
@@ -20,6 +20,7 @@ const Area = styled.div`
   grid-column: ${props => props.column};
   grid-row: ${props => props.row};
   border: ${props => props.isAreaClicked ? '4px solid red' : '2px dashed blue'};
+  user-select: none;
 `;
 
 export default class Squares extends Component {
@@ -59,7 +60,7 @@ export default class Squares extends Component {
     return (
       <GridLayout
         gridLenth={this.props.gridLength}
-        nthQuestion={this.props.nthQuestion}
+        imgId={this.props.imgId}
         imageHeight={this.props.imageHeight}
         imageWidth={this.props.imageWidth}
       >

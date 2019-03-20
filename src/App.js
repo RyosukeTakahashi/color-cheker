@@ -8,7 +8,6 @@ import RadioGroup from '@material-ui/core/RadioGroup';
 import FormGroup from '@material-ui/core/FormGroup/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import FormControl from '@material-ui/core/FormControl';
-import Checkbox from '@material-ui/core/Checkbox/Checkbox';
 //imported libraries
 import styled from 'styled-components';
 import axios from 'axios';
@@ -17,22 +16,23 @@ import 'firebase/firestore';
 import {firebaseConfig} from './firebase/config.js';
 import panAndZoomHoc from 'react-pan-and-zoom-hoc';
 import Papa from 'papaparse';
-import {Row, Col} from 'react-flexbox-grid';
-//hand made component
+import {Col, Row} from 'react-flexbox-grid';
+//hand=made component
 import Squares from './Squares';
 import {StyledQuestionNumberText} from './QuestionNumberText';
 import {StyledCorrectOrWrong} from './CorrectOrWrong';
-import {AnswerGrid} from './AnswerGrid';
 import {MachineCheckResultTable} from './MachineCheckResultTable';
-
-//constants settings
-export const firebaseApp = firebase.initializeApp(firebaseConfig);
-export const db = firebaseApp.firestore();
-// const settings = {timestampsInSnapshots: true};
-// db.settings(settings);
-const gridLength = 5;
-const DataCollectionModeStr = 'DataCollection';
-const AnsweringModeStr = 'Answering';
+import Table from '@material-ui/core/Table/Table';
+import TableHead from '@material-ui/core/TableHead/TableHead';
+import TableRow from '@material-ui/core/TableRow/TableRow';
+import TableCell from '@material-ui/core/TableCell/TableCell';
+import TableBody from '@material-ui/core/TableBody/TableBody';
+import Paper from '@material-ui/core/Paper/Paper';
+import Toolbar from '@material-ui/core/Toolbar/Toolbar';
+import {Checkboxes} from './Checkboxes';
+import InputLabel from '@material-ui/core/InputLabel/InputLabel';
+import Select from '@material-ui/core/Select/Select';
+import MenuItem from '@material-ui/core/MenuItem/MenuItem';
 
 //--done 正解表示UIを作成
 //--done モード選択を用意。
@@ -42,25 +42,29 @@ const AnsweringModeStr = 'Answering';
 //--done 次行くときにデータを送信する
 //--done 初期化
 //--done 画像拡大機能
-//--done欠点の種類を選べるようにする
+//--done 欠点の種類を選べるようにする
+//--done idをセレクタにする。
+//--done csv // user, show_on_nth, img_id(img_path)
+//--done 設定後、いじれないようにする
+//todo 画像のファイル名の仕様決定
+//todo サンプル画像を使う
+//todo 自由テキスト入れる
+//todo 表示画像の数を可変にする（2 or 3）
 
-//納品までにすること
-//-pending 画像を用意する
-//-pending 画像を出す順番仕様策定
-//
-// 4k加増度 分解能 0.125
-//最初に人が見て基準画像
-//次のやつが検査装置的にOKなら、基準画像が更新される。（学習方式という）
-//更新され続けたら、最後と大きな違いが生まれている可能性はある。
-//色差 デルタ256bit, 面積を見ている。2点に飛んだら、それをくくるスクエアを置いている。
-//欠点が検出されたら、欠点画像表示→保存→一応紙で印刷。
-//検出レベルを高くすると、警報がなりっぱなし。セブンだったらこのレベルで良いみたいのはあったらいい。
+//todo 出すテーブルを画像に合わせる(大洋にCSVもらう)
+//todo GCPつなぎ込み
+//todo トレーニングモードの仕様を確定する
 
-//欠点の種類
-//スジ飛び（ドクターブレードの劣化による）、フィッシュアイ（異物あるところに、インク付着しない）
-//インラインとオフラインの検査装置がある。
 
-const defectTypes = ['suji', 'fishEye', 'hoge', 'other'];
+//検出レベルを適切に設定できない新人
+//検出されたやつをとりあえずNGにしてしまう（OKなやつもあるのに）
+
+//constants settings
+export const firebaseApp = firebase.initializeApp(firebaseConfig);
+export const db = firebaseApp.firestore();
+const gridLength = 5;
+const DataCollectionModeStr = 'DataCollection';
+const AnsweringModeStr = 'Answering';
 const paneNames = ['leftPane', 'centerPane', 'rightPane'];
 const paneWidth = ['230px', '1fr', '350px'];
 const appLayoutGridTemplate = `
@@ -86,6 +90,21 @@ const LeftPane = styled(Pane)`
 
 const PannableAndZoomableHOC = panAndZoomHoc('div');
 
+const StyledPaper = styled(Paper)`
+width: 300px;
+margin: 100px 0 40px 20px;
+`;
+
+const StyledToolbar = styled(Toolbar)`
+  background: aliceblue;
+`;
+
+const StyledFormControl = styled(FormControl)`
+&& {
+  min-width: 100px;
+}
+`;
+
 let id = 0;
 
 function createData(defectArea, defectRank) {
@@ -108,25 +127,24 @@ const initializedStateOnButtonClicked = Object.assign({
 }, initialPosition);
 
 const appState = Object.assign({
-  subjectId: 'hoge',
+  subjectId: '',
   nthQuestion: 1,
   selectedMode: 'DataCollection',
   data: {},
+  defectTypes: ['suji', 'fish'],
   machineCheckResult: [],
   imageWidth: 600,
   imageHeight: 600,
+  isStarted: false,
+  imgId: 0,
+  end: false,
 }, initializedStateOnButtonClicked);
-
-defectTypes.forEach((defectType) => {
-  appState[defectType] = false;
-});
 
 class App extends Component {
 
   state = appState;
 
   componentDidMount() {
-    this.startTimer();
     if (this.state.selectedMode === DataCollectionModeStr) {
       App.getAnswer().then(data => {
         console.log('got data from json');
@@ -142,6 +160,13 @@ class App extends Component {
     }).catch(err => {
       console.log(err);
     });
+
+    this.getChoices().catch(err => console.log(err));
+    this.getImgOrder().catch(err => console.log(err));
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.interval);
   }
 
   static async getAnswer() {
@@ -154,8 +179,27 @@ class App extends Component {
     return await res.data;
   };
 
-  handleAreaClick = (gridCount) => () => {
+  getChoices = async () => {
+    const res = await axios('./defect_type_choices.csv');
+    const data = await res.data;
+    const defectTypes = await data.split(',');
+    this.setState({defectTypes});
+    defectTypes.forEach(defectType => {
+      this.setState({[defectType]: false});
+    });
+  };
 
+  getImgOrder = async () => {
+    const res = await axios('./img_order.csv');
+    const data = await res.data;
+    const imgOrder = Papa.parse(data, {
+      header: true,
+      dynamicTyping: true,
+    }).data;
+    this.setState({imgOrder});
+  };
+
+  handleAreaClick = (gridCount) => () => {
     const clickedAreas = () => {
       if (!this.state.clickedAreas.includes(gridCount)) {
         return this.state.clickedAreas.concat([gridCount]);
@@ -188,6 +232,7 @@ class App extends Component {
 
     if (this.state.selectedMode === DataCollectionModeStr) {
       this.initializeForNextQuestion();
+      this.setImgId();
       this.startTimer();
     } else {
       this.setState({
@@ -211,7 +256,7 @@ class App extends Component {
 
   initializeForNextQuestion() {
     this.setState(prevState => {
-      defectTypes.forEach((defectType) => {
+      this.state.defectTypes.forEach((defectType) => {
         initializedStateOnButtonClicked[defectType] = false;
       });
       initializedStateOnButtonClicked['nthQuestion'] = prevState.nthQuestion +
@@ -219,7 +264,28 @@ class App extends Component {
 
       return initializedStateOnButtonClicked;
     });
+
   }
+
+  handleStartButtonClick = () => {
+    this.setState({isStarted: true});
+    this.setImgId();
+    this.startTimer();
+  };
+
+  setImgId = () => {
+    this.setState(previousState => {
+      try {
+        const imgId = previousState.imgOrder.filter((row) => {
+          return (row['user'] === previousState.subjectId) &&
+            (row['show_on_nth'] === previousState.nthQuestion);
+        })[0]['img_id'];
+        return {imgId};
+      } catch (e) {
+        this.setState({end: true});
+      }
+    });
+  };
 
   startTimer = () => {
     clearInterval(this.timer);
@@ -245,7 +311,17 @@ class App extends Component {
 
   handleNextButtonClickInAnswerView = () => {
     this.initializeForNextQuestion();
+    this.setImgId();
     this.startTimer();
+  };
+
+  getFilteredState = (raw, allowed) => {
+    return Object.keys(raw)
+      .filter(key => allowed.includes(key))
+      .reduce((obj, key) => {
+        obj[key] = raw[key];
+        return obj;
+      }, {});
   };
 
   render() {
@@ -253,12 +329,13 @@ class App extends Component {
     const {
       clickedAreas,
       nthQuestion,
-      // defectReason,
       x,
       y,
       scale,
       imageWidth,
       imageHeight,
+      defectTypes,
+      imgId,
     } = this.state;
 
     const [buttonColor, buttonText] = (() => {
@@ -276,30 +353,14 @@ class App extends Component {
       }
     })();
 
-    const Checkboxes = (() => {
-      return defectTypes.map((defectType, index) => {
-        return (
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={this.state[defectType]}
-                onChange={this.handleCheckboxChange(defectType)}
-                value={defectType}
-              />
-            }
-            label={defectType}
-            key={index}
-          />
-        );
-      });
-    });
-
-    // const defectChecked = Object.keys(this.state).filter((e) => )
     const isDefectTypeChecked = defectTypes.map(
       (defectType) => this.state[defectType],
     ).filter((isChecked) => isChecked).length > 0;
 
     const buttonDisable = (() => {
+      if (this.state.timeUsed === 0) {
+        return true;
+      }
       if (clickedAreas.length === 0) {
         return false;
       } else if (isDefectTypeChecked) {
@@ -318,6 +379,15 @@ class App extends Component {
       }
     })();
 
+    const paneDisplay = (() => {
+      if (this.state.end) {
+        return 'none';
+      }
+      return this.state.isStarted ? 'block' : 'none';
+    })();
+
+    const settingsFormDisabled = this.state.isStarted ? true : false;
+
     return (
       <div className="App">
         <header className="App-header">
@@ -326,177 +396,198 @@ class App extends Component {
 
         <AppLayoutGrid>
           <LeftPane area='leftPane'>
-            <div>
-              <FormControl component="fieldset" className="mode-select">
-                {/*<FormLabel component="legend">モード選択</FormLabel>*/}
-                <RadioGroup
-                  aria-label="mode-select"
-                  name="mode-select"
-                  className="mode-select"
-                  value={this.state.selectedMode}
-                  onChange={this.handleRadioButtonChange}
-                >
-                  <FormControlLabel value={DataCollectionModeStr}
-                                    control={<Radio/>}
-                                    label="データ収集モード"/>
-                  <FormControlLabel value={AnsweringModeStr}
-                                    control={<Radio/>}
-                                    label="問題解答モード"/>
-                </RadioGroup>
-              </FormControl>
-            </div>
+            <FormControl component="fieldset" className="mode-select">
+              {/*<FormLabel component="legend">モード選択</FormLabel>*/}
+              <RadioGroup
+                aria-label="mode-select"
+                name="mode-select"
+                className="mode-select"
+                value={this.state.selectedMode}
+                onChange={this.handleRadioButtonChange}
+              >
+                <FormControlLabel value={DataCollectionModeStr}
+                                  control={<Radio/>}
+                                  label="データ収集モード"
+                                  disabled={settingsFormDisabled}/>
+                <FormControlLabel value={AnsweringModeStr}
+                                  control={<Radio/>}
+                                  label="問題解答モード"
+                                  disabled={settingsFormDisabled}/>
+              </RadioGroup>
+            </FormControl>
 
-            <TextField
-              id="subject-id"
-              label="実験者ID"
-              className="TextField"
-              value={this.state.subjectId}
-              onChange={this.handleChange('subjectId')}
-              margin="normal"
-              key='subjectId'
-            />
-          </LeftPane>
-          <Pane area='centerPane'>
-
-            {/*<div style={{*/}
-            {/*display: 'flex',*/}
-            {/*justifyContent: 'flex-end',*/}
-            {/*alignItems: 'center',*/}
-            {/*}}>*/}
-            {/*<div style={{marginRight: '146px'}}>*/}
-            {/*<StyledQuestionNumberText nthQuestion={this.state.nthQuestion}*/}
-            {/*className='styled-question-number'/>*/}
-            {/*<div>*/}
-            {/*経過時間: {this.state.timeUsed}*/}
-            {/*</div>*/}
-            {/*</div>*/}
-            {/*<div style={{marginRight: '10px', marginTop: '30px'}}>*/}
-            {/*<Button variant="contained"*/}
-            {/*onClick={this.handleInitializePosition}>*/}
-            {/*{'初期位置に戻す'}*/}
-            {/*</Button>*/}
-            {/*</div>*/}
-            {/*</div>*/}
-
-            <Row>
-              <Col xsOffset={5} xs={2}>
-                <StyledQuestionNumberText nthQuestion={this.state.nthQuestion}
-                                          className='styled-question-number'/>
-                <div>
-                  経過時間: {this.state.timeUsed}
-                </div>
-              </Col>
-              <Col xsOffset={2} xs={3}>
-                <div style={{marginRight: '10px', marginTop: '30px'}}>
-                  <Button variant="contained"
-                          onClick={this.handleInitializePosition}>
-                    {'初期位置に戻す'}
-                  </Button>
-                </div>
-              </Col>
-            </Row>
-
-
-            <PannableAndZoomableHOC
-              x={x}
-              y={y}
-              scale={scale}
-              scaleFactor={Math.sqrt(2)}
-              minScale={0.5}
-              maxScale={1}
-              onPanAndZoom={(x, y, scale) => this.handlePanAndZoom(x, y,
-                scale)}
-              style={{
-                width: '100%',
-                minWidth: '50%',
-                // height: imageHeight,
-                paddingTop: '100%',
-                border: '1px solid black',
-                position: 'relative',
-                overflow: 'hidden',
-                margin: '20px 0 20px 0px',
-
-              }}
-              onPanMove={(x, y) => this.handlePanMove(x, y)}
-            >
-              <div className="SquareContainer" style={{
-                position: 'absolute',
-                width: '100%',
-                top: '0',
-                bottom: '0',
-                boxSizing: 'border-box',
-                transform: `translate(${(x - 0.5) * imageWidth}px, ${(y -
-                  0.5) *
-                imageHeight}px) scale(${1 / scale})`,
-              }}>
-                <Squares gridLength={gridLength}
-                         clickedAreas={clickedAreas}
-                         onUpdate={this.handleAreaClick}
-                         nthQuestion={nthQuestion}
-                         imageHeight={imageHeight}
-                         imageWidth={imageWidth}
-                />
-              </div>
-
-            </PannableAndZoomableHOC>
-
-
-            {clickedAreas.length > 0 &&
-            <div>
-              {/*<div>*/}
-              {/*<StyledReasonTextField*/}
-              {/*id="defect-reason"*/}
-              {/*label="不良の理由"*/}
-              {/*className="reasonTextField"*/}
-              {/*value={defectReason}*/}
-              {/*onChange={this.handleChange('defectReason')}*/}
-              {/*margin="normal"*/}
-              {/*key='reason'*/}
-              {/*/>*/}
-              {/*</div>*/}
-              <h3>不良の理由</h3>
-
-              <div style={{
-                display: 'flex',
-                justifyContent: 'center',
-                marginTop: '-20px',
-              }}>
-                <FormGroup row>
-                  <Checkboxes/>
-                </FormGroup>
-              </div>
+            <StyledFormControl>
+              <InputLabel htmlFor="age-simple">被験者ID</InputLabel>
+              <Select
+                value={this.state.subjectId}
+                onChange={this.handleChange('subjectId')}
+                inputProps={{
+                  name: 'subjectID',
+                  id: 'age-simple',
+                }}
+                disableUnderline={settingsFormDisabled}
+              >
+                <MenuItem value="" disabled={settingsFormDisabled}>
+                  <em>None</em>
+                </MenuItem>
+                <MenuItem value={1} disabled={settingsFormDisabled}>1</MenuItem>
+                <MenuItem value={2} disabled={settingsFormDisabled}>2</MenuItem>
+                <MenuItem value={3} disabled={settingsFormDisabled}>3</MenuItem>
+              </Select>
+            </StyledFormControl>
+            {this.state.subjectId &&
+            <div style={{marginTop: '20px'}}>
+              <Button variant="contained"
+                      onClick={this.handleStartButtonClick}
+                      disabled={settingsFormDisabled}>
+                {`ID:${this.state.subjectId}の計測を開始する`}
+              </Button>
             </div>
             }
 
+          </LeftPane>
 
-            <div>
-              <Button variant="contained"
-                      color={buttonColor}
-                      onClick={this.handleNextButtonClick}
-                      disabled={buttonDisable}>
-                {buttonText}
-              </Button>
+          <Pane area='centerPane'>
+
+            <div style={{
+              display: this.state.end ? 'flex' : 'none',
+              paddingTop: '50%',
+            }}>
+              ID:{this.state.subjectId}の方の実験終了です。お疲れ様でした。
+              <br/>
+              やり直す場合、ページをF5キーで更新してください。
+            </div>
+            <div style={{display: paneDisplay}}>
+              <Row>
+                <Col xsOffset={5} xs={2}>
+                  <StyledQuestionNumberText nthQuestion={this.state.nthQuestion}
+                                            className='styled-question-number'/>
+                  <div>
+                    経過時間: {this.state.timeUsed}
+                  </div>
+                </Col>
+                <Col xsOffset={2} xs={3}>
+                  <div style={{marginRight: '10px', marginTop: '30px'}}>
+                    <Button variant="contained"
+                            onClick={this.handleInitializePosition}>
+                      {'初期位置に戻す'}
+                    </Button>
+                  </div>
+                </Col>
+              </Row>
+
+
+              <PannableAndZoomableHOC
+                x={x}
+                y={y}
+                scale={scale}
+                scaleFactor={Math.sqrt(2)}
+                minScale={0.5}
+                maxScale={1}
+                onPanAndZoom={(x, y, scale) => this.handlePanAndZoom(x, y,
+                  scale)}
+                style={{
+                  width: '100%',
+                  minWidth: '50%',
+                  paddingTop: '100%',
+                  border: '1px solid black',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  margin: '20px 0 20px 0px',
+
+                }}
+                onPanMove={(x, y) => this.handlePanMove(x, y)}
+              >
+                <div className="SquareContainer" style={{
+                  position: 'absolute',
+                  width: '100%',
+                  top: '0',
+                  bottom: '0',
+                  boxSizing: 'border-box',
+                  transform: `translate(${(x - 0.5) * imageWidth}px, ${(y -
+                    0.5) *
+                  imageHeight}px) scale(${1 / scale})`,
+                }}>
+                  <Squares gridLength={gridLength}
+                           clickedAreas={clickedAreas}
+                           onUpdate={this.handleAreaClick}
+                           nthQuestion={nthQuestion}
+                           imageHeight={imageHeight}
+                           imageWidth={imageWidth}
+                           imgId={imgId}
+                  />
+                </div>
+
+              </PannableAndZoomableHOC>
+
+
+
+
+              {clickedAreas.length > 0 &&
+              <div>
+                <h3>不良の理由</h3>
+
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  marginTop: '-20px',
+                }}>
+                  <FormGroup row>
+                    <Checkboxes defectTypes={defectTypes}
+                                filteredState={this.getFilteredState(this.state,
+                                  defectTypes)}
+                                handleCheckboxChange={this.handleCheckboxChange}/>
+                  </FormGroup>
+                </div>
+              </div>
+              }
+
+              <div>
+                <Button variant="contained"
+                        color={buttonColor}
+                        onClick={this.handleNextButtonClick}
+                        disabled={buttonDisable}>
+                  {buttonText}
+                </Button>
+              </div>
             </div>
           </Pane>
 
-          <Pane area="rightPane">
+          <Pane area="rightPane" style={{display: paneDisplay}}>
             {this.state.machineCheckResult[0] &&
             <MachineCheckResultTable rows={dataRows}/>
             }
 
             {this.state.data['1'] &&
-            this.state.selectedMode === 'Answering' &&
             this.state.shownView === 'Answer' &&
-            <StyledCorrectOrWrong
-              isCorrect={JSON.stringify(
-                this.state.data[this.state.nthQuestion]['answers']) ===
-              JSON.stringify(clickedAreas)}
-              className='styled-correct'/>}
-
-            {this.state.shownView === 'Answer' &&
-            <AnswerGrid
-              answer={this.state.data[nthQuestion]['answers'].join(',')}
-              defectReason={this.state.data[nthQuestion]['reason']}/>}
+            <StyledPaper>
+              <StyledToolbar>
+                回答結果： <StyledCorrectOrWrong
+                isCorrect={JSON.stringify(
+                  this.state.data[this.state.nthQuestion]['answers']) ===
+                JSON.stringify(clickedAreas)}
+                className='styled-correct'/>
+              </StyledToolbar>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell align='center'>不良箇所</TableCell>
+                    <TableCell align='center'>不良理由</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  <TableRow>
+                    <TableCell align='center' component="th">
+                      {this.state.data[nthQuestion]['answers'].join(',')}
+                    </TableCell>
+                    <TableCell align='center'>
+                      {this.state.data[nthQuestion]['reason']}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </StyledPaper>
+            }
 
             {this.state.shownView === 'Answer' &&
             <div>

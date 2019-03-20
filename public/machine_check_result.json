@@ -1,0 +1,62 @@
+{
+  "1": {
+    "results": [
+      {
+        "checkLevel": {
+          "point": 4,
+          "area": 3,
+          "Line": 5
+        },
+        "defectLevel": "high"
+      },
+      {
+        "checkLevel": {
+          "point": 1,
+          "area": 1,
+          "Line": 1
+        },
+        "defectLevel": "none"
+      },
+      {
+        "checkLevel": {
+          "point": 2,
+          "area": 2,
+          "Line": 2
+        },
+        "defectLevel": "low"
+      }
+    ]
+  },
+  "2": {
+    "results": [
+      {
+        "checkLevel": {
+          "point": 4,
+          "area": 3,
+          "Line": 5
+        },
+        "defectLevel": "high"
+      },
+      {
+        "checkLevel": {
+          "point": 1,
+          "area": 1,
+          "Line": 1
+        },
+        "defectLevel": "none"
+      }
+    ]
+  },
+  "3": {
+    "検出結果s": [
+      {
+        "検出レベルの組み合わせ": {
+          "点検出": 4,
+          "面検出": 3,
+          "スジ検出": 5
+        },
+        "検出不良のランク": "high"
+      }
+    ]
+  }
+}
