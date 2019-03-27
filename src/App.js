@@ -12,7 +12,8 @@ import {MuiThemeProvider, createMuiTheme} from '@material-ui/core/styles';
 //imported libraries
 import styled from 'styled-components';
 import axios from 'axios';
-import firebase from 'firebase/app';
+// import firebase from 'firebase/app';
+import firebase from 'firebase';
 import 'firebase/firestore';
 import {firebaseConfig} from './firebase/config.js';
 import panAndZoomHoc from 'react-pan-and-zoom-hoc';
@@ -50,8 +51,9 @@ import RefOrInj from './RefOrInj';
 //--done 設定後、いじれないようにする
 //--done 3つの画像boxを用意
 //--done 自由テキスト入れる
-//todo 実画像とCSVの用意
-//todo GCPつなぎ込み
+//--done 2-2では画像を一つのみ表示
+//todo 実画像とCSVの用意, GCPつなぎ込み
+//todo クリックで画像切り替え
 
 //検出レベルを適切に設定できない新人
 //検出されたやつをとりあえずNGにしてしまう（OKなやつもあるのに）
@@ -131,7 +133,7 @@ const StyledFlexRadioGroup = styled(RadioGroup)`
 `;
 
 const StyledFormGroup = styled(FormGroup)`
-  max-width: 600px;
+  max-width: 900px;
 `;
 
 const initialPosition = {
@@ -157,6 +159,7 @@ const appState = Object.assign({
   subjectId: '', //0 in production
   nthQuestion: 1,
   selectedMode: 'DataCollection',
+  expId: '',
   data: {},
   defectTypes: ['suji', 'fish'],
   recoveryChoices: [],
@@ -193,6 +196,7 @@ class App extends Component {
     this.getChoices().catch(err => console.log(err));
     this.getRecoveryChoices().catch(err => console.log(err));
     this.getImgOrder().catch(err => console.log(err));
+    this.generateReferenceToFile()
   }
 
   componentWillUnmount() {
@@ -239,6 +243,20 @@ class App extends Component {
     this.setState({imgOrder});
   };
 
+  getImgPath = () =>{
+
+  };
+
+  generateReferenceToFile = (imgPath) => {
+    const storage = firebase.storage();
+    const path = "exp022000001/20180907_154557___A/INJ000001.BMP";
+    const pathRef = storage.ref(path);
+    pathRef.getDownloadURL().then(imgUrl=>{
+      this.setState({imgUrl})
+    })
+  };
+
+
   handleAreaClick = (gridCount) => () => {
     const clickedAreas = () => {
       if (!this.state.clickedAreas.includes(gridCount)) {
@@ -259,27 +277,6 @@ class App extends Component {
       [name]: event.target.value,
     });
   };
-
-  // handleNextButtonClick = () => {
-  //   this.stopTimer();
-  //   // noinspection ES6ShorthandObjectProperty
-  //   const {data, machineCheckResult, ...stateWOanswerData} = this.state; // deletes data from state non-destructively
-  //   db.collection('answers').add(stateWOanswerData).then(docRef => {
-  //     console.log('Document written with ID: ', docRef.id);
-  //   }).catch(error => {
-  //     console.error('Error adding document: ', error);
-  //   });
-  //
-  //   if (this.state.selectedMode === DataCollectionModeStr) {
-  //     this.initializeForNextQuestion();
-  //     this.setImgId();
-  //     this.startTimer();
-  //   } else {
-  //     this.setState({
-  //       shownView: 'Answer',
-  //     });
-  //   }
-  // };
 
   moveToNextQuesiton = () => {
     const {data, machineCheckResult, ...stateWOanswerData} = this.state; // deletes data from state non-destructively
@@ -307,19 +304,7 @@ class App extends Component {
         }
         break;
       case 'recoveryChoice':
-
-        const {data, machineCheckResult, ...stateWOanswerData} = this.state; // deletes data from state non-destructively
-        db.collection('answers').add(stateWOanswerData).then(docRef => {
-          console.log('Document written with ID: ', docRef.id);
-        }).catch(error => {
-          console.error('Error adding document: ', error);
-        });
-        if (this.state.selectedMode === DataCollectionModeStr) {
-          this.initializeForNextQuestion();
-          this.setImgId();
-          this.startTimer();
-        }
-
+        this.moveToNextQuesiton();
         break;
       case 'Answer':
         break;
@@ -449,6 +434,8 @@ class App extends Component {
       selectedConfidence,
       machineCheckResult,
       pauseTimer,
+      expId,
+      imgUrl
     } = this.state;
 
     const [pauseButtonColor, pauseButtonText] = (() => {
@@ -531,7 +518,7 @@ class App extends Component {
       return this.state.isStarted ? 'block' : 'none';
     })();
 
-    const settingsFormDisabled = this.state.isStarted ? true : false;
+    const settingsFormDisabled = this.state.isStarted;
 
     return (
       <JssProvider jss={jss} generateClassName={generateClassName}>
@@ -559,6 +546,27 @@ class App extends Component {
                                     disabled={settingsFormDisabled}/>
                 </RadioGroup>
               </FormControl>
+
+              <StyledFormControl>
+                <InputLabel htmlFor="age-simple">実験ID</InputLabel>
+                <Select
+                  value={this.state.expId}
+                  onChange={this.handleChange('expId')}
+                  inputProps={{
+                    name: 'expID',
+                    id: 'expID',
+                  }}
+                  disableUnderline={settingsFormDisabled}
+                >
+                  <MenuItem value="" disabled={settingsFormDisabled}>
+                    <em>None</em>
+                  </MenuItem>
+                  <MenuItem value={'2-1'}
+                            disabled={settingsFormDisabled}>2-1</MenuItem>
+                  <MenuItem value={'2-2'}
+                            disabled={settingsFormDisabled}>2-2</MenuItem>
+                </Select>
+              </StyledFormControl>
 
               <StyledFormControl>
                 <InputLabel htmlFor="age-simple">被験者ID</InputLabel>
@@ -624,30 +632,32 @@ class App extends Component {
                   </Col>
                 </Row>
 
-                <div style={{
-                  display: 'flex',
-                  width: '100%',
-                  justifyContent: 'center',
-                  overflow: 'hidden',
-                  paddingTop: (248 / 1008) * 100 + '%',
-                  position: 'relative',
-                  border: 1,
-                  borderStyle: 'solid',
-                  backgroundImage: 'url(\'https://dummyimage.com/1008x256/a8a8a8/ffffff&text=製品全体画像\')',
+                {/*<div style={{*/}
+                {/*display: 'flex',*/}
+                {/*width: '100%',*/}
+                {/*justifyContent: 'center',*/}
+                {/*overflow: 'hidden',*/}
+                {/*paddingTop: (248 / 1008) * 100 + '%',*/}
+                {/*position: 'relative',*/}
+                {/*border: 1,*/}
+                {/*borderStyle: 'solid',*/}
+                {/*backgroundImage: 'url(\'https://dummyimage.com/1008x256/a8a8a8/ffffff&text=製品全体画像\')',*/}
 
-                }}>
-                  <div style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '90%',
-                    // height: 200,
-                  }}>
-                  </div>
-                </div>
+                {/*}}>*/}
+                {/*<div style={{*/}
+                {/*position: 'absolute',*/}
+                {/*top: 0,*/}
+                {/*left: 0,*/}
+                {/*width: '90%',*/}
+                {/*// height: 200,*/}
+                {/*}}>*/}
+                {/*</div>*/}
+                {/*</div>*/}
 
                 <div style={{display: 'flex', justifyContent: 'space-around'}}>
 
+
+                  {expId === '2-1' &&
                   <PannableAndZoomableHOC
                     x={x}
                     y={y}
@@ -689,7 +699,7 @@ class App extends Component {
                       />
                     </div>
                   </PannableAndZoomableHOC>
-
+                  }
 
                   <PannableAndZoomableHOC
                     x={x}
@@ -729,6 +739,7 @@ class App extends Component {
                                imageHeight={imageHeight}
                                imageWidth={imageWidth}
                                imgId={imgId}
+                               imgUrl={imgUrl}
                       />
                     </div>
                   </PannableAndZoomableHOC>
@@ -738,8 +749,10 @@ class App extends Component {
                 <MuiThemeProvider theme={theme}>
 
                   <Row>
+
                     <Col xs={10}>
                       {this.state.machineCheckResult[0] &&
+                        expId === '2-1' &&
                       <MachineCheckResultTable
                         rows={machineCheckResult[nthQuestion]}/>
                       }
@@ -769,7 +782,7 @@ class App extends Component {
                       justifyContent: 'center',
                       marginTop: '-20px',
                     }}>
-                      <FormGroup row>
+                      <StyledFormGroup row>
                         <Checkboxes choices={defectTypes}
                                     filteredState={this.getFilteredState(
                                       this.state,
@@ -783,7 +796,7 @@ class App extends Component {
                                            'defectReason')}
                         />
 
-                      </FormGroup>
+                      </StyledFormGroup>
                     </div>
                   </div>
                   }
@@ -848,7 +861,6 @@ class App extends Component {
                                     handleCheckboxChange={this.handleCheckboxChange}/>
                         <StyledTextField id="recoveryChoice"
                                          label="自由記述"
-                          // className={classes.textField}
                                          value={this.state.recoveryText}
                                          onChange={this.handleChange(
                                            'recoveryText')}

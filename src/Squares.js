@@ -11,7 +11,8 @@ const GridLayout = styled.div`
   top: 0;
   bottom: 0;
   grid-template-columns: repeat(${(props) => props.gridLength}, 1fr);
-  background-image: url("https://dummyimage.com/${(props) => `${props.imageWidth}x${props.imageHeight}`}/a8a8a8/fff&text=img${(props) => props.imgId}");
+  //background-image: url("https://dummyimage.com/${(props) => `${props.imageWidth}x${props.imageHeight}`}/a8a8a8/fff&text=img${(props) => props.imgId}");
+  background-image: url(${props=>props.imgUrl});
   background-repeat: no-repeat;
   background-size: cover;
 `;
@@ -63,6 +64,7 @@ export default class Squares extends Component {
         imgId={this.props.imgId}
         imageHeight={this.props.imageHeight}
         imageWidth={this.props.imageWidth}
+        imgUrl={this.props.imgUrl}
       >
         {areas}
       </GridLayout>

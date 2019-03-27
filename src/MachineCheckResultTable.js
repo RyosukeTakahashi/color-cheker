@@ -20,7 +20,6 @@ background: aliceblue;
 
 export function MachineCheckResultTable(props) {
   const {rows} = props;
-  console.log(rows);
   return (
     <StyledPaper>
       <StyledToolbar>
