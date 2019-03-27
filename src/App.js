@@ -156,10 +156,11 @@ const initializedStateOnButtonClicked = Object.assign({
 }, initialPosition);
 
 const appState = Object.assign({
-  subjectId: '', //0 in production
+  subjectId: 1, //0 in production
   nthQuestion: 1,
   selectedMode: 'DataCollection',
-  expId: '',
+  expId: '2-1',//'' in production?
+  expPlan: [],
   data: {},
   defectTypes: ['suji', 'fish'],
   recoveryChoices: [],
@@ -171,11 +172,13 @@ const appState = Object.assign({
   end: false,
 }, initializedStateOnButtonClicked);
 
+const storage = firebase.storage();
+
 class App extends Component {
 
   state = appState;
 
-  componentDidMount() {
+  async componentDidMount() {
     if (this.state.selectedMode === DataCollectionModeStr) {
       App.getAnswer().then(data => {
         console.log('got data from json');
@@ -196,8 +199,17 @@ class App extends Component {
     this.getChoices().catch(err => console.log(err));
     this.getRecoveryChoices().catch(err => console.log(err));
     this.getImgOrder().catch(err => console.log(err));
-    this.generateReferenceToFile()
+    await this.getExpPlanCSV(this.state.expId).catch(err => console.log(err));
+    // await this.getImgPath('SMP');
+    // await this.generateReferenceToFile();
   }
+
+
+  handleExpIdChange = (event) =>{
+    this.setState({expId: event.target.value}, async () => {
+      await this.getExpPlanCSV(this.state.expId).catch(err => console.log(err));
+    });
+  };
 
   componentWillUnmount() {
     clearInterval(this.interval);
@@ -208,7 +220,7 @@ class App extends Component {
     return await res.data;
   };
 
-  static async getCsv() {
+  static async getCsv(expId) {
     const res = await axios('./sample_dropped.csv');
     return await res.data;
   };
@@ -243,19 +255,54 @@ class App extends Component {
     this.setState({imgOrder});
   };
 
-  getImgPath = () =>{
+  getExpPlanCSV = async (expId) => {
+    const res = await axios(`./${expId}.csv`);
+    const data = await res.data;
+    const expPlan = Papa.parse(data, {
+      header: true,
+      // dynamicTyping: true, //it would make file name change.
+    }).data;
+    this.setState({expPlan});
 
   };
 
-  generateReferenceToFile = (imgPath) => {
-    const storage = firebase.storage();
-    const path = "exp022000001/20180907_154557___A/INJ000001.BMP";
-    const pathRef = storage.ref(path);
-    pathRef.getDownloadURL().then(imgUrl=>{
-      this.setState({imgUrl})
-    })
+  getImgPath = (imgType) => {
+    this.setState(previousState => {
+      try {
+        console.log(previousState.subjectId, previousState.nthQuestion);
+        const row = previousState.expPlan.filter((row) => {
+          return (row['subjectId'] === String(previousState.subjectId)) &&
+            (row['showOnNth'] === String(previousState.nthQuestion));
+        })[0];
+        const imgPath = `${row.path1}/${row.path2}/${imgType}${row.path3}.BMP`;
+        return {imgPath};
+      } catch (e) {
+        console.log(e);
+        this.setState({end: true});
+      }
+    });
   };
 
+  generateReferenceToFile = () => {
+    const pathSmp = `${this.state.imgPath.replace('__', '___')}`;
+    if (this.state.expId === '2-1') {
+      const pathInj = pathSmp.replace('SMP', 'INJ');
+      const pathRef = pathSmp.replace('SMP', 'REF');
+      const pathRefInj = storage.ref(pathInj);
+      pathRefInj.getDownloadURL().then(imgUrlInj => {
+        this.setState({imgUrlInj});
+      });
+      const pathRefRef = storage.ref(pathRef);
+      pathRefRef.getDownloadURL().then(imgUrlRef => {
+        this.setState({imgUrlRef});
+      });
+    }
+    const pathRefSmp = storage.ref(pathSmp);
+    pathRefSmp.getDownloadURL().then(imgUrlSmp => {
+      this.setState({imgUrlSmp});
+    });
+
+  };
 
   handleAreaClick = (gridCount) => () => {
     const clickedAreas = () => {
@@ -278,7 +325,14 @@ class App extends Component {
     });
   };
 
-  moveToNextQuesiton = () => {
+  handleStartButtonClick = async () => {
+    this.setState({isStarted: true});
+    await this.getImgPath('SMP');
+    await this.generateReferenceToFile();
+    this.startTimer();
+  };
+
+  moveToNextQuesiton = async () => {
     const {data, machineCheckResult, ...stateWOanswerData} = this.state; // deletes data from state non-destructively
     db.collection('answers').add(stateWOanswerData).then(docRef => {
       console.log('Document written with ID: ', docRef.id);
@@ -287,7 +341,9 @@ class App extends Component {
     });
     if (this.state.selectedMode === DataCollectionModeStr) {
       this.initializeForNextQuestion();
-      this.setImgId();
+      // this.setImgId();
+      await this.getImgPath('SMP');
+      await this.generateReferenceToFile();
       this.startTimer();
     }
   };
@@ -341,11 +397,6 @@ class App extends Component {
 
   }
 
-  handleStartButtonClick = () => {
-    this.setState({isStarted: true});
-    this.setImgId();
-    this.startTimer();
-  };
 
   setImgId = () => {
     this.setState(previousState => {
@@ -435,7 +486,9 @@ class App extends Component {
       machineCheckResult,
       pauseTimer,
       expId,
-      imgUrl
+      imgUrlSmp,
+      imgUrlRef,
+      imgUrlInj,
     } = this.state;
 
     const [pauseButtonColor, pauseButtonText] = (() => {
@@ -551,7 +604,8 @@ class App extends Component {
                 <InputLabel htmlFor="age-simple">実験ID</InputLabel>
                 <Select
                   value={this.state.expId}
-                  onChange={this.handleChange('expId')}
+                  // onChange={this.handleChange('expId')}
+                  onChange={this.handleExpIdChange}
                   inputProps={{
                     name: 'expID',
                     id: 'expID',
@@ -608,7 +662,8 @@ class App extends Component {
                 display: this.state.end ? 'flex' : 'none',
                 paddingTop: '50%',
               }}>
-                ID:{this.state.subjectId}の方の実験終了です。お疲れ様でした。
+                ID:{this.state.subjectId}の方の実験終了です。お疲れ様でした。<br/>
+                実験1は40問、実験2は24問あったと思われます。そこに満たずにこれが表示されている場合、実験スタッフにお申し付けください。<br/>
                 <br/>
                 やり直す場合、ページをF5キーで更新してください。
               </div>
@@ -696,6 +751,8 @@ class App extends Component {
                                 imageHeight={imageHeight}
                                 imageWidth={imageWidth}
                                 imgId={imgId}
+                                imgUrlRef={imgUrlRef}
+                                imgUrlInj={imgUrlInj}
                       />
                     </div>
                   </PannableAndZoomableHOC>
@@ -739,7 +796,7 @@ class App extends Component {
                                imageHeight={imageHeight}
                                imageWidth={imageWidth}
                                imgId={imgId}
-                               imgUrl={imgUrl}
+                               imgUrl={imgUrlSmp}
                       />
                     </div>
                   </PannableAndZoomableHOC>
@@ -752,7 +809,7 @@ class App extends Component {
 
                     <Col xs={10}>
                       {this.state.machineCheckResult[0] &&
-                        expId === '2-1' &&
+                      expId === '2-1' &&
                       <MachineCheckResultTable
                         rows={machineCheckResult[nthQuestion]}/>
                       }
