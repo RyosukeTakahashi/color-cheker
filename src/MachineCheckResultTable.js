@@ -10,9 +10,8 @@ import styled from 'styled-components';
 import * as PropTypes from 'prop-types';
 
 const StyledPaper = styled(Paper)`
-width: 300px;
 margin-left: 20px;
-margin-top: 100px;
+margin-bottom: 30px;
 `;
 
 const StyledToolbar = styled(Toolbar)`
@@ -20,7 +19,8 @@ background: aliceblue;
 `;
 
 export function MachineCheckResultTable(props) {
-  let {rows} = props;
+  const {rows} = props;
+  console.log(rows);
   return (
     <StyledPaper>
       <StyledToolbar>
@@ -29,23 +29,25 @@ export function MachineCheckResultTable(props) {
       <Table>
         <TableHead>
           <TableRow>
+            <TableCell align='center'>X[mm]</TableCell>
+            <TableCell align='center'>Y[m]</TableCell>
+            <TableCell align='center'>サイズ[mmsq]</TableCell>
             <TableCell align='center'>検出領域</TableCell>
             <TableCell align='center'>検出ランク</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {rows.map((row, index) => (
-            <TableRow key={index}>
-              <TableCell align='center' component="th">
-                {row.defectArea}
-              </TableCell>
-              <TableCell align='center'>{row.defectRank}</TableCell>
-            </TableRow>
-          ))}
+          <TableRow>
+            <TableCell align='center'>{rows.x}</TableCell>
+            <TableCell align='center'>{rows.y}</TableCell>
+            <TableCell align='center'>{rows.size}</TableCell>
+            <TableCell align='center'>{rows.detectedArea}</TableCell>
+            <TableCell align='center'>{rows.rank}</TableCell>
+          </TableRow>
         </TableBody>
       </Table>
     </StyledPaper>
   );
 }
 
-MachineCheckResultTable.propTypes = {rows: PropTypes.any}
+MachineCheckResultTable.propTypes = {rows: PropTypes.any};

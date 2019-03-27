@@ -10,12 +10,9 @@ new_file = open("sample_cleansed.csv", 'w')
 new_file.write(''.join(csv_lines))
 new_file.close()
 
-df = pd.read_csv("sample_cleansed.csv", header=None, usecols=[6, 7])
+df = pd.read_csv("sample_cleansed.csv", header=None, usecols=[2, 3, 4, 6, 7])
 
-df.columns = ["detected_area", "rank"]
+df.columns = ['x', 'y', 'size', "detected_area", "rank"]
 
 df.to_csv("sample_dropped.csv")
 print(df)
-
-
-
