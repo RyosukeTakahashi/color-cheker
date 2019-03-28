@@ -888,13 +888,13 @@ class App extends Component {
                                           control={<Radio/>}
                                           label="OK"
                         />
-                        <FormControlLabel value={'NG'}
+                        <FormControlLabel value={'後工程で確認'}
                                           control={<Radio/>}
-                                          label="NG"
+                                          label="後工程で確認"
                         />
-                        <FormControlLabel value={'DEL'}
+                        <FormControlLabel value={'後工程で除去'}
                                           control={<Radio/>}
-                                          label="Del"
+                                          label="後工程で除去"
                         />
                       </StyledFlexRadioGroup>
                     </FormControl>
