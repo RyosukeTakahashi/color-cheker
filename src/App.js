@@ -333,8 +333,8 @@ class App extends Component {
   };
 
   moveToNextQuesiton = async () => {
-    const {data, machineCheckResult, ...stateWOanswerData} = this.state; // deletes data from state non-destructively
-    db.collection('answers').add(stateWOanswerData).then(docRef => {
+    const {data, machineCheckResult, defectTypes, expPlan, imageHeight, imageWidth, imgOrder, recoveryChoices, ...stateWOanswerData} = this.state; // deletes data from state non-destructively
+    db.collection('answers_prodcution').add(stateWOanswerData).then(docRef => {
       console.log('Document written with ID: ', docRef.id);
     }).catch(error => {
       console.error('Error adding document: ', error);
@@ -809,7 +809,7 @@ class App extends Component {
 
                     <Col xs={10}>
                       {this.state.machineCheckResult[0] &&
-                      expId === '2-1' &&
+                      expId === '2-3' &&
                       <MachineCheckResultTable
                         rows={machineCheckResult[nthQuestion]}/>
                       }
