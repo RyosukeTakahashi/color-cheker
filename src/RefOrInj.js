@@ -43,7 +43,7 @@ export default class RefOrInj extends Component {
 
   render() {
 
-    const imgUrl = this.state.showRef ? this.props.imgUrlRef:this.props.imgUrlInj ;
+    const imgUrl = this.state.showRef ? this.props.imgUrlInj:this.props.imgUrlRef ;
 
     return (
       <GridLayout
