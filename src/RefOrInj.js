@@ -36,14 +36,13 @@ export default class RefOrInj extends Component {
   };
 
   handleOnClick = () => {
-    this.setState((prevState) =>{
-      return {showRef: !prevState.showRef}
-    });
+    console.log("clicked");
+    this.props.clickHandler()
   };
 
   render() {
 
-    const imgUrl = this.state.showRef ? this.props.imgUrlInj:this.props.imgUrlRef ;
+    const imgUrl = this.props.showRef ? this.props.imgUrlInj:this.props.imgUrlRef ;
 
     return (
       <GridLayout

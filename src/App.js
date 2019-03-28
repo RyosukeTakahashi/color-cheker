@@ -153,6 +153,7 @@ const initializedStateOnButtonClicked = Object.assign({
   judgeReason: '',
   selectedConfidence: 0,
   pauseTimer: false,
+  showRef: true
 }, initialPosition);
 
 const appState = Object.assign({
@@ -208,6 +209,11 @@ class App extends Component {
   handleExpIdChange = (event) =>{
     this.setState({expId: event.target.value}, async () => {
       await this.getExpPlanCSV(this.state.expId).catch(err => console.log(err));
+    });
+  };
+  handleOnRefClick = () => {
+    this.setState((prevState) =>{
+      return {showRef: !prevState.showRef}
     });
   };
 
@@ -489,6 +495,7 @@ class App extends Component {
       imgUrlSmp,
       imgUrlRef,
       imgUrlInj,
+      showRef
     } = this.state;
 
     const [pauseButtonColor, pauseButtonText] = (() => {
@@ -753,6 +760,8 @@ class App extends Component {
                                 imgId={imgId}
                                 imgUrlRef={imgUrlRef}
                                 imgUrlInj={imgUrlInj}
+                                showRef={showRef}
+                                clickHandler={this.handleOnRefClick}
                       />
                     </div>
                   </PannableAndZoomableHOC>
