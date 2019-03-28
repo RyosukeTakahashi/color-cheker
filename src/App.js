@@ -884,17 +884,17 @@ class App extends Component {
                         value={this.state.selectedOkNgDel}
                         onChange={this.handleOkNgDelRadioButtonChange}
                       >
-                        <FormControlLabel value={'OK'}
+                        <FormControlLabel value={'良品'}
                                           control={<Radio/>}
-                                          label="OK"
+                                          label="良品"
                         />
-                        <FormControlLabel value={'後工程で確認'}
+                        <FormControlLabel value={'不良（後工程で確認を）'}
                                           control={<Radio/>}
-                                          label="後工程で確認"
+                                          label="不良（後工程で確認を）"
                         />
-                        <FormControlLabel value={'後工程で除去'}
+                        <FormControlLabel value={'不良（後工程で除去を）'}
                                           control={<Radio/>}
-                                          label="後工程で除去"
+                                          label="不良（後工程で除去を）"
                         />
                       </StyledFlexRadioGroup>
                     </FormControl>
