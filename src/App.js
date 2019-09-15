@@ -19,7 +19,7 @@ import {firebaseConfig} from './firebase/config.js';
 import panAndZoomHoc from 'react-pan-and-zoom-hoc';
 import Papa from 'papaparse';
 import {Col, Row} from 'react-flexbox-grid';
-//hand=made component
+//hand-made component
 import Squares from './Squares';
 import {StyledQuestionNumberText} from './QuestionNumberText';
 import {StyledCorrectOrWrong} from './CorrectOrWrong';
@@ -37,24 +37,7 @@ import Select from '@material-ui/core/Select/Select';
 import MenuItem from '@material-ui/core/MenuItem/MenuItem';
 import RefOrInj from './RefOrInj';
 
-//--done 正解表示UIを作成
-//--done モード選択を用意。
-//--done(問題ID,正解) correct_answers.csv用意
-//--done 良品/不良判断ボタンを用意。
-//--done 解答時間を計測する。
-//--done 次行くときにデータを送信する
-//--done 初期化
-//--done  画像拡大機能
-//--done 欠点の種類を選べるようにする
-//--done idをセレクタにする。
-//--done csv // user, show_on_nth, img_id(img_path)
-//--done 設定後、いじれないようにする
-//--done 3つの画像boxを用意
-//--done 自由テキスト入れる
-//--done 2-2では画像を一つのみ表示
-//--done 実画像とCSVの用意, GCPつなぎ込み
-//--done クリックで画像切り替え
-
+//課題感
 //検出レベルを適切に設定できない新人
 //検出されたやつをとりあえずNGにしてしまう（OKなやつもあるのに）
 

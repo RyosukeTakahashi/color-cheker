@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "nedo-taiyo-experiment-app",
+  "private_key_id": "ccd761a2f8b7ac0df79c91da278d7fb59dfa65f7",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCWT1rfhbwybPxe\nswP0ZvFmDNeItXlM9ohzA4Ku6uqX5bRnCscZ7/wpQ6I2t6OvWOXT2wdUk1Smw77L\nTKIXn+Vxo0Cvo1l/XUc/epClxNldgyVYPghsBrl6v+BEMcai4UXe8rsfr/GeSNlO\nkSU/ftWmbcVdKF6HvhxlO9c5nVmFulMltp6KiRp+naTwNeGD3psdZcEOBA2tOIcF\nAP3EMHMxdxbTdxZZpEeHzuofbzQuN+nGwyvW4+YJmOuMV6rmJghEZFHVaD6DyrFV\nULr6Zw1+D8KteNslwV5xm4/QerdRs0/nWvdX8O1wAEhtZq0fK75ljMu5+PVyIoie\nndWeTvuDAgMBAAECggEABu6g+8cQr2isWPe7mnV286Rq+lCYSA7kqx1B1SxbZmb/\nI3NxTEZvpD2MySY+A9O/Qb6Lv4BN+qTzcy/VF+7VZ6DGVnNbqM6V/xz5d9O0zKXE\nPqYZwFWtDzazMqHzDccC8G3UaHk2VPz6HK///kYst1C/tfSrK2p+p8KTQgJ6QvsL\nSx/HmCV2k4sa2uoYM8AYfsIys7wN2QbOsMbOdn3aDyPfmM64kcDk1nfmDl5uAbxZ\nHUL25ChMCuj1EPsE5gMfpIOs7Yp9acxV+cmaYlBdHnwek2K40olFeLkBOHEzCPfm\nhqQ+4saAzvQnBDPd2M3d5VXJ7b3sub78/OVPO6L9JQKBgQDHE+BAbpdylh46tjyB\nJyGkUecEGkXDEQ4IgEo5gLh4JVATN6XJ6uqEumIIVAkHlEbIvjka17RbuvNIzU3e\nFbUFSlneA15HKZaLhIRcgTzOSjLm1Zrww730HHxb5JJuY8CfoMd048xWrIoIYkQq\nymjLDtccn5GHPBW0AB0dt82RbwKBgQDBScY20MUASkQtXoaO6sBqdmZDgDGEJ9Hs\niLzCi1nID1WT9hQtmsWRj+obJ6L0pOwv2KLJCRRV0bei1hGlFpHRq7Xi4jklnY9Y\nKH8cHo82cvwmStyVyjn11K3hryStMqTETaAglU/HITnc6qm5tY2ok1aA2vpB5knr\nn+AJAN7FLQKBgGM0yXTyZ7BnlMrnU8F80awEUJ5fxVIPJrIf1F1RgxwEZCIfghPc\naGAaTY4e6p0HTDrvaJ+yzKNFx8UI4nwAz0PCqIQVo57M38PJFvjOQpH+sd0Mp3jB\n4uBKbcKRZlNyjGRACAV9G7A5rVO+PIAifBRs4c/WyPveemZIBDpyBRQrAoGBALF7\nnqii1uJHT4chbwk4gerAQXLl+ZHSRq6deEZjUtOjUP+GTEz7+0KIFX1NzhI6hi4B\nDKjwz11mLus1Cgq/SLJwq5lkBPmHTiKzPNSDMxnaR7KZtydMBCC5Y9kBy/nFsQoY\nBVsl/5Vn6wvx5luCXEtYz2uOp5Fvdp0Htt5NkEEZAoGABU7ymfQl8FJzJNYaYsei\nMKxrwvFHt8Uo/vnKYQO//i2oA0H05kDeAHZjxecWW+vQcKEJqP1V26XX/fl6fvyT\nAxzPLHm0Ds/xEjFxGifzdLOyTDNQRywE/hu93j4T1HOHRkXUYOYXnYpN/EO7J0J4\nIOMJ2vIL98bhWRedAT7vfGE=\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-8k5ou@nedo-taiyo-experiment-app.iam.gserviceaccount.com",
+  "client_id": "111539695723024961106",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-8k5ou%40nedo-taiyo-experiment-app.iam.gserviceaccount.com"
+}
