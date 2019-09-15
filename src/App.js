@@ -8,14 +8,18 @@ import RadioGroup from '@material-ui/core/RadioGroup';
 import FormGroup from '@material-ui/core/FormGroup/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import FormControl from '@material-ui/core/FormControl';
-import {MuiThemeProvider, createMuiTheme} from '@material-ui/core/styles';
+import {
+  createGenerateClassName,
+  createMuiTheme,
+  jssPreset,
+  MuiThemeProvider,
+} from '@material-ui/core/styles';
 //imported libraries
 import styled from 'styled-components';
 import axios from 'axios';
 // import firebase from 'firebase/app';
 import firebase from 'firebase';
 import 'firebase/firestore';
-import {firebaseConfig} from './firebase/config.js';
 import panAndZoomHoc from 'react-pan-and-zoom-hoc';
 import Papa from 'papaparse';
 import {Col, Row} from 'react-flexbox-grid';
@@ -39,7 +43,13 @@ import RefOrInj from './RefOrInj';
 //constants settings
 import JssProvider from 'react-jss/lib/JssProvider';
 import {create} from 'jss';
-import {createGenerateClassName, jssPreset} from '@material-ui/core/styles';
+import {
+  AnsweringModeStr,
+  appLayoutGridTemplate,
+  DataCollectionModeStr,
+  db,
+  gridLength,
+} from './constants';
 
 //課題感
 //検出レベルを適切に設定できない新人
@@ -58,18 +68,6 @@ const theme = createMuiTheme({
     useNextVariants: true,
   },
 });
-
-export const firebaseApp = firebase.initializeApp(firebaseConfig);
-export const db = firebaseApp.firestore();
-const gridLength = 5;
-const DataCollectionModeStr = 'DataCollection';
-const AnsweringModeStr = 'Answering';
-const paneNames = ['leftPane', 'centerPane'];
-const paneWidth = ['230px', '1fr'];
-const appLayoutGridTemplate = `
-"${paneNames.join(' ')}"
-/ ${paneWidth.join(' ')}
-`;
 
 const AppLayoutGrid = styled.div`
   display: grid;
