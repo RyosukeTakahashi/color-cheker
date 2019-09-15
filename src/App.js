@@ -36,15 +36,14 @@ import InputLabel from '@material-ui/core/InputLabel/InputLabel';
 import Select from '@material-ui/core/Select/Select';
 import MenuItem from '@material-ui/core/MenuItem/MenuItem';
 import RefOrInj from './RefOrInj';
-
-//課題感
-//検出レベルを適切に設定できない新人
-//検出されたやつをとりあえずNGにしてしまう（OKなやつもあるのに）
-
 //constants settings
 import JssProvider from 'react-jss/lib/JssProvider';
 import {create} from 'jss';
 import {createGenerateClassName, jssPreset} from '@material-ui/core/styles';
+
+//課題感
+//検出レベルを適切に設定できない新人
+//検出されたやつをとりあえずNGにしてしまう（OKなやつもあるのに）
 
 const generateClassName = createGenerateClassName();
 const jss = create({
@@ -545,14 +544,6 @@ class App extends Component {
       }
     })();
 
-    // const dataRows = (() => {
-    //   try {
-    //     const machineResult = machineCheckResult[nthQuestion];
-    //     return [createData(machineResult[1], machineResult[2])];
-    //   } catch (e) {
-    //     return [createData('Loading', 'Loading')];
-    //   }
-    // })();
 
     const paneDisplay = (() => {
       if (this.state.end) {
@@ -677,27 +668,6 @@ class App extends Component {
                   </Col>
                 </Row>
 
-                {/*<div style={{*/}
-                {/*display: 'flex',*/}
-                {/*width: '100%',*/}
-                {/*justifyContent: 'center',*/}
-                {/*overflow: 'hidden',*/}
-                {/*paddingTop: (248 / 1008) * 100 + '%',*/}
-                {/*position: 'relative',*/}
-                {/*border: 1,*/}
-                {/*borderStyle: 'solid',*/}
-                {/*backgroundImage: 'url(\'https://dummyimage.com/1008x256/a8a8a8/ffffff&text=製品全体画像\')',*/}
-
-                {/*}}>*/}
-                {/*<div style={{*/}
-                {/*position: 'absolute',*/}
-                {/*top: 0,*/}
-                {/*left: 0,*/}
-                {/*width: '90%',*/}
-                {/*// height: 200,*/}
-                {/*}}>*/}
-                {/*</div>*/}
-                {/*</div>*/}
 
                 <div style={{display: 'flex', justifyContent: 'space-around'}}>
 
