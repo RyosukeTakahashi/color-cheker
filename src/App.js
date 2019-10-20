@@ -1,28 +1,23 @@
 import React, {Component} from 'react';
 import './App.css';
+
 //Material UI
 import Button from '@material-ui/core/Button';
-import TextField from '@material-ui/core/TextField';
 import Radio from '@material-ui/core/Radio';
 import RadioGroup from '@material-ui/core/RadioGroup';
-import FormGroup from '@material-ui/core/FormGroup/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import FormControl from '@material-ui/core/FormControl';
-import {
-  createGenerateClassName,
-  createMuiTheme,
-  jssPreset,
-  MuiThemeProvider,
-} from '@material-ui/core/styles';
+import {MuiThemeProvider} from '@material-ui/core/styles';
+
 //imported libraries
-import styled from 'styled-components';
 import axios from 'axios';
+
 // import firebase from 'firebase/app';
-import firebase from 'firebase';
 import 'firebase/firestore';
 import panAndZoomHoc from 'react-pan-and-zoom-hoc';
 import Papa from 'papaparse';
 import {Col, Row} from 'react-flexbox-grid';
+
 //hand-made component
 import Squares from './Squares';
 import {StyledQuestionNumberText} from './QuestionNumberText';
@@ -33,88 +28,58 @@ import TableHead from '@material-ui/core/TableHead/TableHead';
 import TableRow from '@material-ui/core/TableRow/TableRow';
 import TableCell from '@material-ui/core/TableCell/TableCell';
 import TableBody from '@material-ui/core/TableBody/TableBody';
-import Paper from '@material-ui/core/Paper/Paper';
-import Toolbar from '@material-ui/core/Toolbar/Toolbar';
 import {Checkboxes} from './Checkboxes';
 import InputLabel from '@material-ui/core/InputLabel/InputLabel';
 import Select from '@material-ui/core/Select/Select';
 import MenuItem from '@material-ui/core/MenuItem/MenuItem';
 import RefOrInj from './RefOrInj';
+
 //constants settings
 import JssProvider from 'react-jss/lib/JssProvider';
-import {create} from 'jss';
 import {
   AnsweringModeStr,
-  appLayoutGridTemplate,
+  AppLayoutGrid,
   DataCollectionModeStr,
   db,
+  generateClassName,
   gridLength,
+  jss,
+  LeftPane,
+  Pane,
+  storage,
+  StyledFlexRadioGroup,
+  StyledFormControl,
+  StyledFormGroup,
+  StyledPaper,
+  StyledTextField,
+  StyledToolbar,
+  theme,
 } from './constants';
+import {ExperimentEndMessage} from './ExperimentEndMessage';
 
 //課題感
 //検出レベルを適切に設定できない新人
 //検出されたやつをとりあえずNGにしてしまう（OKなやつもあるのに）
 
-const generateClassName = createGenerateClassName();
-const jss = create({
-  ...jssPreset(),
-  // We define a custom insertion point that JSS will look for injecting the styles in the DOM.
-  insertionPoint: document.getElementById('jss-insertion-point'),
-});
-const theme = createMuiTheme({
-  typography: {
-    // Tell Material-UI what's the font-size on the html element is.
-    fontSize: 30,
-    useNextVariants: true,
-  },
-});
+//Todo
+// CSVの情報を追加する（ロールの長さ、ロール全体からみた欠点箇所の座標などを含んだCSV）
+// 辻くんが生成してくれたjsonデータを呼んで、submitの都度表示できるように
+// 欠点分類を選ぶ→欠点箇所を選ぶを0回以上できるようにする
+// 社員番号などを入力でき、どの被験者の回答か識別可能
 
-const AppLayoutGrid = styled.div`
-  display: grid;
-  grid-template: ${appLayoutGridTemplate};
-`;
-
-const Pane = styled.div`
-  grid-area: ${props => props.area};
-`;
-
-const LeftPane = styled(Pane)`
-  border-right-width: medium;
-  border-right-style: solid;
-  margin-right: 40px;
-  padding-right: 15px;
-`;
+//Todo 優先順位 ３>>４>２>１
+// １）サインアップ－ 任意のIDを新規登録（既にDBにあるIDは使わない）
+//  (1) Googleアカウントを作成する（仕事用に）　パスワード必要？
+//  (2)Googleアカウントを読み込んでログイン．
+// ２）ログイン（登録したGoogleアカウントを使って）
+// ３）アカウントで出力画像を統制（回答していない画像＞不正解の画像＞正解した画像）
+// ①出力したい画像のフォルダを選ぶ　〇
+// 　②実験に使いたいファイルフォルダーオリジナルフォルダー厳選した画像ファイル ○
+// ・CSV一覧で指定（2018年度の実験２のように、出力順番決められる）
+// 欠点のcsvの当該行を併記する以外に、全体画像も、表示してほしいとのこと。ポップアップでも可
+// ４）アカウントで成績管理（レポート）
 
 const PannableAndZoomableHOC = panAndZoomHoc('div');
-
-const StyledPaper = styled(Paper)`
-width: 300px;
-margin: 100px 0 40px 20px;
-`;
-
-const StyledToolbar = styled(Toolbar)`
-  background: aliceblue;
-`;
-
-const StyledFormControl = styled(FormControl)`
-&& {
-  min-width: 100px;
-}
-`;
-
-const StyledTextField = styled(TextField)`
-margin-top: -8px;
-`;
-
-const StyledFlexRadioGroup = styled(RadioGroup)`
- display: flex;
- justify-content: center;
- flex-direction: row;
-`;
-
-const StyledFormGroup = styled(FormGroup)`
-  max-width: 900px;
-`;
 
 const initialPosition = {
   x: 0.5,
@@ -133,13 +98,13 @@ const initializedStateOnButtonClicked = Object.assign({
   judgeReason: '',
   selectedConfidence: 0,
   pauseTimer: false,
-  showRef: true
+  showRef: true,
 }, initialPosition);
 
 const appState = Object.assign({
   subjectId: 1, //0 in production
   nthQuestion: 1,
-  selectedMode: 'DataCollection',
+  selectedMode: DataCollectionModeStr,
   expId: '2-1',//'' in production?
   expPlan: [],
   data: {},
@@ -152,8 +117,6 @@ const appState = Object.assign({
   imgId: 0,
   end: false,
 }, initializedStateOnButtonClicked);
-
-const storage = firebase.storage();
 
 class App extends Component {
 
@@ -185,15 +148,14 @@ class App extends Component {
     // await this.generateReferenceToFile();
   }
 
-
-  handleExpIdChange = (event) =>{
+  handleExpIdChange = (event) => {
     this.setState({expId: event.target.value}, async () => {
       await this.getExpPlanCSV(this.state.expId).catch(err => console.log(err));
     });
   };
   handleOnRefClick = () => {
-    this.setState((prevState) =>{
-      return {showRef: !prevState.showRef}
+    this.setState((prevState) => {
+      return {showRef: !prevState.showRef};
     });
   };
 
@@ -269,6 +231,7 @@ class App extends Component {
     });
   };
 
+  //reference for google cloud storage
   generateReferenceToFile = () => {
     const pathSmp = `${this.state.imgPath.replace('__', '___')}`;
     if (this.state.expId === '2-1') {
@@ -318,40 +281,46 @@ class App extends Component {
     this.startTimer();
   };
 
-  moveToNextQuesiton = async () => {
-    const {data, machineCheckResult, defectTypes, expPlan, imageHeight, imageWidth, imgOrder, recoveryChoices, ...stateWOanswerData} = this.state; // deletes data from state non-destructively
+  moveToNextQuestion = async () => {
+    const {
+      data, machineCheckResult, defectTypes,
+      expPlan, imageHeight, imageWidth, imgOrder,
+      recoveryChoices, ...stateWOanswerData
+    } = this.state; // deletes data from state non-destructively
+
     db.collection('answers_prodcution').add(stateWOanswerData).then(docRef => {
       console.log('Document written with ID: ', docRef.id);
     }).catch(error => {
       console.error('Error adding document: ', error);
     });
-    if (this.state.selectedMode === DataCollectionModeStr) {
-      this.initializeForNextQuestion();
-      // this.setImgId();
-      await this.getImgPath('SMP');
-      await this.generateReferenceToFile();
-      this.startTimer();
-    }
+
+    this.initializeForNextQuestion();
+    // this.setImgId();
+    await this.getImgPath('SMP');
+    await this.generateReferenceToFile();
+    this.startTimer();
+
   };
 
   handleButtonClick = () => {
     console.log('timer stop');
+
     this.stopTimer();
-    switch (this.state.shownView) {
-      case 'Question':
-        if (this.state.clickedAreas.length > 0) {
-          this.setState({shownView: 'recoveryChoice'});
-        } else if (this.state.clickedAreas.length === 0) {
-          this.moveToNextQuesiton();
-        }
-        break;
-      case 'recoveryChoice':
-        this.moveToNextQuesiton();
-        break;
-      case 'Answer':
-        break;
-      default:
-        break;
+    if (this.state.selectedMode === DataCollectionModeStr) {
+      this.moveToNextQuestion();
+    }
+
+    if (this.state.selectedMode === AnsweringModeStr) {
+      switch (this.state.shownView) {
+        case 'Question':
+          this.setState({shownView: 'Answer'});
+          break;
+        case 'Answer':
+          this.moveToNextQuestion();
+          break;
+        default:
+          break;
+      }
     }
   };
 
@@ -382,7 +351,6 @@ class App extends Component {
     });
 
   }
-
 
   setImgId = () => {
     this.setState(previousState => {
@@ -437,12 +405,6 @@ class App extends Component {
     this.setState({[name]: event.target.checked});
   };
 
-  handleNextButtonClickInAnswerView = () => {
-    this.initializeForNextQuestion();
-    this.setImgId();
-    this.startTimer();
-  };
-
   getFilteredState = (raw, allowed) => {
     return Object.keys(raw)
       .filter(key => allowed.includes(key))
@@ -466,7 +428,6 @@ class App extends Component {
       recoveryChoices,
       imgId,
       shownView,
-      defectReason,
       recoveryText,
       selectedConfidence,
       machineCheckResult,
@@ -475,7 +436,7 @@ class App extends Component {
       imgUrlSmp,
       imgUrlRef,
       imgUrlInj,
-      showRef
+      showRef,
     } = this.state;
 
     const [pauseButtonColor, pauseButtonText] = (() => {
@@ -498,12 +459,12 @@ class App extends Component {
         } else {
           return [
             'secondary',
-            `選択したタイルを、↑の理由で不良箇所として${nextTxt}へ`];
+            `選択したタイルを、不良箇所として${nextTxt}へ`];
         }
-      } else if (shownView === 'recoveryChoice') {
+      } else if (shownView === 'Answer'){
         return [
           'secondary',
-          `↑をこの不良の処置として${nextTxt}へ`];
+          `次へ`];
       }
     })();
 
@@ -511,37 +472,35 @@ class App extends Component {
       (defectType) => this.state[defectType],
     ).filter((isChecked) => isChecked).length > 0;
 
-    const isrecoveryActionChecked = recoveryChoices.map(
+    const isRecoveryActionChecked = recoveryChoices.map(
       (choice) => this.state[choice],
     ).filter((isChecked) => isChecked).length > 0;
 
     const buttonDisable = (() => {
 
-      if (shownView === 'Question') {
-
-        if (defectReason.length > 0) {
-          return false;
-        }
-
-        if (this.state.timeUsed === 0) {
-          return true;
-        }
-        if (clickedAreas.length === 0) {
-          return false;
-        } else if (isDefectTypeChecked) {
-          return false;
-        } else if (!isDefectTypeChecked) {
-          return true;
-        }
-      } else if (shownView === 'recoveryChoice') {
-
-        const recoveryAnswered = recoveryText.length > 0 ||
-          isrecoveryActionChecked;
-        const confidenceAnsweed = selectedConfidence !== 0;
-        return !(recoveryAnswered && confidenceAnsweed);
+      if (this.state.timeUsed === 0) {
+        return true;
       }
-    })();
 
+      if (selectedConfidence === 0) {
+        return true;
+      } else if (clickedAreas.length === 0) { // 確信度がクリックされ、良品判定しようとしている。
+        return false;
+      }
+
+      if (!isDefectTypeChecked) {
+        return true;
+      }
+
+      if (clickedAreas.length === 0) {
+        return false;
+      } else {
+        const recoveryAnswered = recoveryText.length > 0 ||
+          isRecoveryActionChecked;
+        return !recoveryAnswered;
+      }
+
+    })();
 
     const paneDisplay = (() => {
       if (this.state.end) {
@@ -560,7 +519,6 @@ class App extends Component {
           <AppLayoutGrid>
             <LeftPane area='leftPane'>
               <FormControl component="fieldset" className="mode-select">
-                {/*<FormLabel component="legend">モード選択</FormLabel>*/}
                 <RadioGroup
                   aria-label="mode-select"
                   name="mode-select"
@@ -637,15 +595,8 @@ class App extends Component {
 
             <Pane area='centerPane'>
 
-              <div style={{
-                display: this.state.end ? 'flex' : 'none',
-                paddingTop: '50%',
-              }}>
-                ID:{this.state.subjectId}の方の実験終了です。お疲れ様でした。<br/>
-                実験1は40問、実験2は24問あったと思われます。そこに満たずにこれが表示されている場合、実験スタッフにお申し付けください。<br/>
-                <br/>
-                やり直す場合、ページをF5キーで更新してください。
-              </div>
+              <ExperimentEndMessage end={this.state.end}
+                                    subjectId={this.state.subjectId}/>
               <div style={{display: paneDisplay}}>
                 <Row>
                   <Col xsOffset={4} xs={4}>
@@ -783,8 +734,7 @@ class App extends Component {
 
                   </Row>
 
-                  {clickedAreas.length > 0 && this.state.shownView !==
-                  'recoveryChoice' &&
+                  {clickedAreas.length > 0 &&
 
                   <div style={{fontSize: 36}}>
                     <Row>
@@ -819,72 +769,75 @@ class App extends Component {
                   }
 
 
-                  {this.state.shownView === 'recoveryChoice' &&
                   <div style={{fontSize: 36}}>
-                    <Row>
-                      <Col xsOffset={4} xs={4}>
-                        <h3>判定</h3>
-                      </Col>
-                    </Row>
-                    <FormControl component="fieldset" className="mode-select">
-                      {/*<FormLabel component="legend">モード選択</FormLabel>*/}
-                      <StyledFlexRadioGroup
-                        aria-label="ok-ng-del"
-                        name="ok-ng-del"
-                        className="ok-ng-del"
-                        value={this.state.selectedOkNgDel}
-                        onChange={this.handleOkNgDelRadioButtonChange}
-                      >
-                        <FormControlLabel value={'良品'}
-                                          control={<Radio/>}
-                                          label="良品"
-                        />
-                        <FormControlLabel value={'不良（後工程で確認を）'}
-                                          control={<Radio/>}
-                                          label="不良（後工程で確認を）"
-                        />
-                        <FormControlLabel value={'不良（後工程で除去を）'}
-                                          control={<Radio/>}
-                                          label="不良（後工程で除去を）"
-                        />
-                      </StyledFlexRadioGroup>
-                    </FormControl>
-                    <div>
-                      <StyledTextField id="judgeReason"
-                                       label="判定理由"
-                                       value={this.state.judgeReason}
-                                       onChange={this.handleChange(
-                                         'judgeReason')}
-                      />
-                    </div>
-
-                    <Row>
-                      <Col xsOffset={4} xs={4}>
-                        <h3 style={{marginTop: 40}}>取るべき処置</h3>
-                      </Col>
-                    </Row>
-
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'center',
-                      marginTop: '-20px',
-                      // maxWidth: '600px'
-                    }}>
-                      <StyledFormGroup row>
-                        <Checkboxes choices={recoveryChoices}
-                                    filteredState={this.getFilteredState(
-                                      this.state,
-                                      recoveryChoices)}
-                                    handleCheckboxChange={this.handleCheckboxChange}/>
-                        <StyledTextField id="recoveryChoice"
-                                         label="自由記述"
-                                         value={this.state.recoveryText}
+                    {clickedAreas.length > 0 &&
+                    <React.Fragment>
+                      <Row>
+                        <Col xsOffset={4} xs={4}>
+                          <h3>判定</h3>
+                        </Col>
+                      </Row>
+                      <FormControl component="fieldset" className="mode-select">
+                        {/*<FormLabel component="legend">モード選択</FormLabel>*/}
+                        <StyledFlexRadioGroup
+                          aria-label="ok-ng-del"
+                          name="ok-ng-del"
+                          className="ok-ng-del"
+                          value={this.state.selectedOkNgDel}
+                          onChange={this.handleOkNgDelRadioButtonChange}
+                        >
+                          <FormControlLabel value={'良品'}
+                                            control={<Radio/>}
+                                            label="良品"
+                          />
+                          <FormControlLabel value={'不良（後工程で確認を）'}
+                                            control={<Radio/>}
+                                            label="不良（後工程で確認を）"
+                          />
+                          <FormControlLabel value={'不良（後工程で除去を）'}
+                                            control={<Radio/>}
+                                            label="不良（後工程で除去を）"
+                          />
+                        </StyledFlexRadioGroup>
+                      </FormControl>
+                      <div>
+                        <StyledTextField id="judgeReason"
+                                         label="判定理由"
+                                         value={this.state.judgeReason}
                                          onChange={this.handleChange(
-                                           'recoveryText')}
+                                           'judgeReason')}
                         />
+                      </div>
 
-                      </StyledFormGroup>
-                    </div>
+                      <Row>
+                        <Col xsOffset={4} xs={4}>
+                          <h3 style={{marginTop: 40}}>取るべき処置</h3>
+                        </Col>
+                      </Row>
+
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        marginTop: '-20px',
+                        // maxWidth: '600px'
+                      }}>
+                        <StyledFormGroup row>
+                          <Checkboxes choices={recoveryChoices}
+                                      filteredState={this.getFilteredState(
+                                        this.state,
+                                        recoveryChoices)}
+                                      handleCheckboxChange={this.handleCheckboxChange}/>
+                          <StyledTextField id="recoveryChoice"
+                                           label="自由記述"
+                                           value={this.state.recoveryText}
+                                           onChange={this.handleChange(
+                                             'recoveryText')}
+                          />
+
+                        </StyledFormGroup>
+                      </div>
+                    </React.Fragment>
+                    }
                     <Row>
                       <Col xsOffset={4} xs={4}>
                         <h3 style={{marginTop: 40}}>判定の確信度</h3>
@@ -906,61 +859,55 @@ class App extends Component {
                         />;
                       })}
                     </StyledFlexRadioGroup>
-
                   </div>
-                  }
+
+
                   <div style={{marginTop: 30}}>
                     <Button variant="contained"
                             color={buttonColor}
-                      // onClick={this.handleNextButtonClick}
                             onClick={this.handleButtonClick}
                             disabled={buttonDisable}>
                       {buttonText}
                     </Button>
                   </div>
+
+                  {
+                    this.state.shownView === 'Answer' &&
+                    <div style={{display: 'flex', justifyContent: 'center'}}>
+                      <StyledPaper>
+                        <StyledToolbar>
+                          回答結果： <StyledCorrectOrWrong
+                          isCorrect={JSON.stringify(
+                            this.state.data[this.state.nthQuestion]['answers']) ===
+                          JSON.stringify(clickedAreas)}
+                          className='styled-correct'/>
+                        </StyledToolbar>
+                        <Table>
+                          <TableHead>
+                            <TableRow>
+                              <TableCell align='center'>不良箇所</TableCell>
+                              <TableCell align='center'>不良理由</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            <TableRow>
+                              <TableCell align='center' component="th">
+                                {this.state.data[nthQuestion]['answers'].join(
+                                  ',')}
+                              </TableCell>
+                              <TableCell align='center'>
+                                {this.state.data[nthQuestion]['reason']}
+                              </TableCell>
+                            </TableRow>
+                          </TableBody>
+                        </Table>
+                      </StyledPaper>
+                    </div>
+                  }
+
                 </MuiThemeProvider>
 
               </div>
-            </Pane>
-
-            <Pane area="rightPane" style={{display: paneDisplay}}>
-
-              {this.state.data['1'] &&
-              this.state.shownView === 'Answer' &&
-              <StyledPaper>
-                <StyledToolbar>
-                  回答結果： <StyledCorrectOrWrong
-                  isCorrect={JSON.stringify(
-                    this.state.data[this.state.nthQuestion]['answers']) ===
-                  JSON.stringify(clickedAreas)}
-                  className='styled-correct'/>
-                </StyledToolbar>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell align='center'>不良箇所</TableCell>
-                      <TableCell align='center'>不良理由</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell align='center' component="th">
-                        {this.state.data[nthQuestion]['answers'].join(',')}
-                      </TableCell>
-                      <TableCell align='center'>
-                        {this.state.data[nthQuestion]['reason']}
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </StyledPaper>
-              }
-
-              {this.state.shownView === 'Answer' &&
-              <div>
-                <Button variant="contained" color={buttonColor}
-                        onClick={this.handleNextButtonClickInAnswerView}>次へ</Button>
-              </div>}
 
 
             </Pane>
