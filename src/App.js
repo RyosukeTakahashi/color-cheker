@@ -62,8 +62,7 @@ import {ExperimentEndMessage} from './ExperimentEndMessage';
 //検出されたやつをとりあえずNGにしてしまう（OKなやつもあるのに）
 
 //Todo
-// CSVの情報を追加する（ロールの長さ、ロール全体からみた欠点箇所の座標などを含んだCSV）
-// 辻くんが生成してくれたjsonデータを呼んで、submitの都度表示できるように
+// 辻くんが生成してくれたjsonデータを呼んで、画像&正解読めるように。
 // 欠点分類を選ぶ→欠点箇所を選ぶを0回以上できるようにする
 // 社員番号などを入力でき、どの被験者の回答か識別可能
 
@@ -461,7 +460,7 @@ class App extends Component {
             'secondary',
             `選択したタイルを、不良箇所として${nextTxt}へ`];
         }
-      } else if (shownView === 'Answer'){
+      } else if (shownView === 'Answer') {
         return [
           'secondary',
           `次へ`];
@@ -720,7 +719,7 @@ class App extends Component {
 
                     <Col xs={10}>
                       {this.state.machineCheckResult[0] &&
-                      expId === '2-3' &&
+                      expId === '2-1' &&
                       <MachineCheckResultTable
                         rows={machineCheckResult[nthQuestion]}/>
                       }
