@@ -56,13 +56,13 @@ import {
   theme,
 } from './constants';
 import {ExperimentEndMessage} from './ExperimentEndMessage';
+import TextField from '@material-ui/core/es/TextField/TextField';
 
 //課題感
 //検出レベルを適切に設定できない新人
 //検出されたやつをとりあえずNGにしてしまう（OKなやつもあるのに）
 
 //Todo
-// 社員番号入力できるように
 // フォルダ選べるように
 // 辻くんが生成してくれたjsonデータを呼んで、画像&正解読めるように。
 // 欠点分類を選ぶ→欠点箇所を選ぶを0回以上できるようにする
@@ -104,9 +104,10 @@ const initializedStateOnButtonClicked = Object.assign({
 
 const appState = Object.assign({
   subjectId: 1, //0 in production
+  userIdNum: '',
   nthQuestion: 1,
   selectedMode: DataCollectionModeStr,
-  expId: '2-1',//'' in production?
+  expId: '2-1',//'' in production
   expPlan: [],
   data: {},
   defectTypes: ['suji', 'fish'],
@@ -235,6 +236,9 @@ class App extends Component {
   //reference for google cloud storage
   generateReferenceToFile = () => {
     const pathSmp = `${this.state.imgPath.replace('__', '___')}`;
+
+    console.log(storage.ref().listAll());
+
     if (this.state.expId === '2-1') {
       const pathInj = pathSmp.replace('SMP', 'INJ');
       const pathRef = pathSmp.replace('SMP', 'REF');
@@ -582,6 +586,18 @@ class App extends Component {
                             disabled={settingsFormDisabled}>3</MenuItem>
                 </Select>
               </StyledFormControl>
+
+              <StyledFormControl>
+                <StyledTextField id="userIdNum"
+                                 label="社員番号"
+                                 value={this.state.userIdNum}
+                                 onChange={this.handleChange(
+                                   'userIdNum')}
+                />
+              </StyledFormControl>
+
+
+
               {this.state.subjectId &&
               <div style={{marginTop: '20px'}}>
                 <Button variant="contained"
