@@ -56,7 +56,6 @@ import {
   theme,
 } from './constants';
 import {ExperimentEndMessage} from './ExperimentEndMessage';
-import TextField from '@material-ui/core/es/TextField/TextField';
 
 //課題感
 //検出レベルを適切に設定できない新人
@@ -237,7 +236,23 @@ class App extends Component {
   generateReferenceToFile = () => {
     const pathSmp = `${this.state.imgPath.replace('__', '___')}`;
 
-    console.log(storage.ref().listAll());
+    const getMethods = (obj) => Object.getOwnPropertyNames(obj)//.filter(item =>typeof obj[item] === 'function');
+
+    // console.log(storage.ref());
+    // console.log(getMethods(storage.ref()));
+    storage.ref().listAll().then(function(res) {
+      res.prefixes.forEach(function(folderRef) {
+        // All the prefixes under listRef.
+        // You may call listAll() recursively on them.
+        console.log(folderRef)
+      });
+      res.items.forEach(function(itemRef) {
+        // All the items under listRef.
+      });
+    }).catch(function(error) {
+      console.log(error)
+      // Uh-oh, an error occurred!
+    });
 
     if (this.state.expId === '2-1') {
       const pathInj = pathSmp.replace('SMP', 'INJ');

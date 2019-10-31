@@ -6,7 +6,8 @@
     "@material-ui/core": "^3.9.2",
     "@material-ui/icons": "^3.0.1",
     "axios": "^0.18.0",
-    "firebase": "^5.7.0",
+    "firebase": "^7.2.2",
+    "jss": "latest",
     "papaparse": "^4.6.3",
     "prop-types": "latest",
     "react": "^16.6.3",
@@ -15,8 +16,7 @@
     "react-jss": "^8.6.1",
     "react-pan-and-zoom-hoc": "^1.3.2",
     "react-scripts": "^2.1.5",
-    "styled-components": "^4.1.2",
-    "jss": "latest"
+    "styled-components": "^4.1.2"
   },
   "scripts": {
     "start": "react-scripts start",
