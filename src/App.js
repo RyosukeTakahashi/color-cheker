@@ -127,22 +127,12 @@ class App extends Component {
     this.getMachineCheckResultCsv().catch(err=> console.log(err));
     this.getChoices().catch(err => console.log(err));
     this.getRecoveryChoices().catch(err => console.log(err));
-    this.getListOfFirebaseStorage();
+    this.getListOfFirebaseStorage().catch(err => console.log(err));
     await this.getExpPlanCSV(this.state.expId).catch(err => console.log(err));
-    // For debugging. Need await for getExpPlanCSV
-    await this.handleStartButtonClick()
-  }
 
-  handleExpIdChange = (event) => {
-    this.setState({expId: event.target.value}, async () => {
-      await this.getExpPlanCSV(this.state.expId).catch(err => console.log(err));
-    });
-  };
-  handleOnRefClick = () => {
-    this.setState((prevState) => {
-      return {showRef: !prevState.showRef};
-    });
-  };
+    // For debugging. Need await for getExpPlanCSV
+    // await this.handleStartButtonClick()
+  }
 
   componentWillUnmount() {
     clearInterval(this.interval);
@@ -191,11 +181,27 @@ class App extends Component {
 
   };
 
+  getListOfFirebaseStorage = async () => {
+    storage.ref().child('exp021000001').list().then(function(res) {
+      res.prefixes.forEach(function(folderRef) {
+        console.log(folderRef);
+      });
+      res.items.forEach(function(itemRef) {
+        // All the items under listRef.
+      });
+    })
+  };
+
+  handleStartButtonClick = async () => {
+    this.setState({isStarted: true});
+    await this.getImgPath('SMP');
+    await this.generateReferenceToFile();
+    this.startTimer();
+  };
+
   getImgPath = async (imgType) => {
     this.setState(previousState => {
       try {
-        console.log(previousState.subjectId, previousState.nthQuestion);
-        console.log(previousState.expPlan);
         const row = previousState.expPlan.filter((row) => {
           return (row['subjectId'] === String(previousState.subjectId)) &&
             (row['showOnNth'] === String(previousState.nthQuestion));
@@ -209,20 +215,10 @@ class App extends Component {
     });
   };
 
-  getListOfFirebaseStorage = () => {
-    console.log(storage.ref().child('exp021000001').toString());
-    storage.ref().child('exp021000001').list().then(function(res) {
-      res.prefixes.forEach(function(folderRef) {
-        // All the prefixes under listRef. Can listAll() recursively on them.
-        console.log(folderRef);
-      });
-      res.items.forEach(function(itemRef) {
-        // All the items under listRef.
-      });
-    }).catch(function(error) {
-      console.log(error);
+  handleExpIdChange = (event) => {
+    this.setState({expId: event.target.value}, async () => {
+      await this.getExpPlanCSV(this.state.expId).catch(err => console.log(err));
     });
-
   };
 
   //reference for google cloud storage
@@ -248,34 +244,6 @@ class App extends Component {
 
   };
 
-  handleAreaClick = (gridCount) => () => {
-    const clickedAreas = () => {
-      if (!this.state.clickedAreas.includes(gridCount)) {
-        return this.state.clickedAreas.concat([gridCount]);
-      } else {
-        return this.state.clickedAreas.filter(
-          (element) => element !== gridCount);
-      }
-    };
-    this.setState({
-        clickedAreas: clickedAreas(),
-      },
-    );
-  };
-
-  handleChange = name => event => {
-    this.setState({
-      [name]: event.target.value,
-    });
-  };
-
-  handleStartButtonClick = async () => {
-    this.setState({isStarted: true});
-    await this.getImgPath('SMP');
-    await this.generateReferenceToFile();
-    this.startTimer();
-  };
-
   startTimer = () => {
     clearInterval(this.timer);
     this.timer = setInterval(this.tick, 1000);
@@ -296,6 +264,28 @@ class App extends Component {
   handlePauseTogglerClick = () => {
     this.setState((prevState) => {
       return {pauseTimer: !prevState.pauseTimer};
+    });
+  };
+
+
+  handleAreaClick = (gridCount) => () => {
+    const clickedAreas = () => {
+      if (!this.state.clickedAreas.includes(gridCount)) {
+        return this.state.clickedAreas.concat([gridCount]);
+      } else {
+        return this.state.clickedAreas.filter(
+          (element) => element !== gridCount);
+      }
+    };
+    this.setState({
+        clickedAreas: clickedAreas(),
+      },
+    );
+  };
+
+  handleOnRefClick = () => {
+    this.setState((prevState) => {
+      return {showRef: !prevState.showRef};
     });
   };
 
@@ -367,10 +357,6 @@ class App extends Component {
     });
   }
 
-  handleRadioButtonChange = event => {
-    this.setState({selectedMode: event.target.value});
-  };
-
   handleOkNgDelRadioButtonChange = event => {
     this.setState({selectedOkNgDel: event.target.value});
   };
@@ -379,6 +365,11 @@ class App extends Component {
   };
   handleCheckboxChange = name => event => {
     this.setState({[name]: event.target.checked});
+  };
+
+  //util functions follow
+  handleChange = name => event => {
+    this.setState({[name]: event.target.value,});
   };
 
   getFilteredState = (raw, allowed) => {
@@ -500,7 +491,8 @@ class App extends Component {
                   name="mode-select"
                   className="mode-select"
                   value={this.state.selectedMode}
-                  onChange={this.handleRadioButtonChange}
+                  // onChange={this.handleRadioButtonChange}
+                  onChange={this.handleChange('selectedMode')}
                 >
                   <FormControlLabel value={DataCollectionModeStr}
                                     control={<Radio/>}

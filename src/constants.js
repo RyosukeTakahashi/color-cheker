@@ -12,7 +12,7 @@ import FormControl from '@material-ui/core/FormControl';
 import TextField from '@material-ui/core/TextField';
 import FormGroup from '@material-ui/core/FormGroup';
 
-import * as firebase from 'firebase'
+import firebase from 'firebase/app';
 import 'firebase/firestore'
 import 'firebase/storage'
 

@@ -7,7 +7,6 @@
     "@material-ui/icons": "^3.0.1",
     "axios": "^0.18.0",
     "firebase": "^7.2.2",
-    "jss": "latest",
     "papaparse": "^4.6.3",
     "prop-types": "latest",
     "react": "^16.6.3",
