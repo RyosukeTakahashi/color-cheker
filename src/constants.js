@@ -1,5 +1,3 @@
-import firebase from 'firebase';
-import {firebaseConfig} from './firebase/config';
 import {create} from 'jss';
 import {
   createGenerateClassName,
@@ -14,8 +12,16 @@ import FormControl from '@material-ui/core/FormControl';
 import TextField from '@material-ui/core/TextField';
 import FormGroup from '@material-ui/core/FormGroup';
 
+import * as firebase from 'firebase'
+import 'firebase/firestore'
+import 'firebase/storage'
+
+import {firebaseConfig} from './firebase/config';
 const firebaseApp = firebase.initializeApp(firebaseConfig);
 export const db = firebaseApp.firestore();
+export const storage = firebase.storage();
+
+
 export const gridLength = 5;
 export const DataCollectionModeStr = 'DataCollection';
 export const AnsweringModeStr = 'Answering';
@@ -75,4 +81,3 @@ export const StyledFlexRadioGroup = styled(RadioGroup)`
 export const StyledFormGroup = styled(FormGroup)`
   max-width: 900px;
 `;
-export const storage = firebase.storage();

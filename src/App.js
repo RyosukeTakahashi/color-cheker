@@ -40,12 +40,12 @@ import {
   AnsweringModeStr,
   AppLayoutGrid,
   DataCollectionModeStr,
-  db,
   generateClassName,
   gridLength,
   jss,
   LeftPane,
   Pane,
+  db,
   storage,
   StyledFlexRadioGroup,
   StyledFormControl,
@@ -57,6 +57,7 @@ import {
 } from './constants';
 import {ExperimentEndMessage} from './ExperimentEndMessage';
 
+
 //課題感
 //検出レベルを適切に設定できない新人
 //検出されたやつをとりあえずNGにしてしまう（OKなやつもあるのに）
@@ -65,7 +66,6 @@ import {ExperimentEndMessage} from './ExperimentEndMessage';
 // フォルダ選べるように
 // 辻くんが生成してくれたjsonデータを呼んで、画像&正解読めるように。
 // 欠点分類を選ぶ→欠点箇所を選ぶを0回以上できるようにする
-// 社員番号などを入力でき、どの被験者の回答か識別可能
 
 //Todo 優先順位 ３>>４>２>１
 // １）サインアップ－ 任意のIDを新規登録（既にDBにあるIDは使わない）
@@ -108,7 +108,7 @@ const appState = Object.assign({
   selectedMode: DataCollectionModeStr,
   expId: '2-1',//'' in production
   expPlan: [],
-  data: {},
+  data: {}, // answer data
   defectTypes: ['suji', 'fish'],
   recoveryChoices: [],
   machineCheckResult: [],
@@ -132,6 +132,7 @@ class App extends Component {
         console.log(err);
       });
     }
+
 
     App.getCsv().then(csv => {
       console.log('got data from csv');
@@ -232,15 +233,9 @@ class App extends Component {
     });
   };
 
-  //reference for google cloud storage
-  generateReferenceToFile = () => {
-    const pathSmp = `${this.state.imgPath.replace('__', '___')}`;
-
-    const getMethods = (obj) => Object.getOwnPropertyNames(obj)//.filter(item =>typeof obj[item] === 'function');
-
-    // console.log(storage.ref());
-    // console.log(getMethods(storage.ref()));
-    storage.ref().listAll().then(function(res) {
+  getListOfFirebaseStorage = () => {
+    console.log(storage.ref().child('exp021000001').toString());
+    storage.ref().child('exp021000001').list().then(function(res) {
       res.prefixes.forEach(function(folderRef) {
         // All the prefixes under listRef.
         // You may call listAll() recursively on them.
@@ -253,6 +248,13 @@ class App extends Component {
       console.log(error)
       // Uh-oh, an error occurred!
     });
+
+  };
+
+
+  //reference for google cloud storage
+  generateReferenceToFile = () => {
+    const pathSmp = `${this.state.imgPath.replace('__', '___')}`;
 
     if (this.state.expId === '2-1') {
       const pathInj = pathSmp.replace('SMP', 'INJ');
@@ -298,6 +300,7 @@ class App extends Component {
     this.setState({isStarted: true});
     await this.getImgPath('SMP');
     await this.generateReferenceToFile();
+    await this.getListOfFirebaseStorage();
     this.startTimer();
   };
 
