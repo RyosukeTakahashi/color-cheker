@@ -57,7 +57,6 @@ import {
 } from './constants';
 import {ExperimentEndMessage} from './ExperimentEndMessage';
 
-
 //課題感
 //検出レベルを適切に設定できない新人
 //検出されたやつをとりあえずNGにしてしまう（OKなやつもあるのに）
@@ -124,24 +123,8 @@ class App extends Component {
   state = appState;
 
   async componentDidMount() {
-    if (this.state.selectedMode === DataCollectionModeStr) {
-      App.getAnswer().then(data => {
-        console.log('got data from json');
-        this.setState({data});
-      }).catch(err => {
-        console.log(err);
-      });
-    }
-
-
-    App.getCsv().then(csv => {
-      console.log('got data from csv');
-      this.setState(
-        {machineCheckResult: Papa.parse(csv, {header: true})['data']});
-    }).catch(err => {
-      console.log(err);
-    });
-
+    this.getAnswer().catch(err=> console.log(err));
+    this.getMachineCheckResultCsv().catch(err=> console.log(err));
     this.getChoices().catch(err => console.log(err));
     this.getRecoveryChoices().catch(err => console.log(err));
     this.getImgOrder().catch(err => console.log(err));
@@ -165,14 +148,16 @@ class App extends Component {
     clearInterval(this.interval);
   }
 
-  static async getAnswer() {
+  getAnswer = async () => {
     const res = await axios('./correct_answers.json');
-    return await res.data;
+    const data = res.data;
+    this.setState({data});
   };
 
-  static async getCsv(expId) {
+  getMachineCheckResultCsv = async () => {
     const res = await axios('./sample_dropped.csv');
-    return await res.data;
+    const csv = res.data;
+    this.setState({machineCheckResult: Papa.parse(csv, {header: true})['data']})
   };
 
   getChoices = async () => {
@@ -239,18 +224,17 @@ class App extends Component {
       res.prefixes.forEach(function(folderRef) {
         // All the prefixes under listRef.
         // You may call listAll() recursively on them.
-        console.log(folderRef)
+        console.log(folderRef);
       });
       res.items.forEach(function(itemRef) {
         // All the items under listRef.
       });
     }).catch(function(error) {
-      console.log(error)
+      console.log(error);
       // Uh-oh, an error occurred!
     });
 
   };
-
 
   //reference for google cloud storage
   generateReferenceToFile = () => {
@@ -613,7 +597,6 @@ class App extends Component {
                                    'userIdNum')}
                 />
               </StyledFormControl>
-
 
 
               {this.state.subjectId &&
