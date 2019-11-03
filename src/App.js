@@ -104,7 +104,7 @@ const appState = Object.assign({
   subjectId: 1, //0 in production
   userIdNum: '',
   nthQuestion: 1,
-  selectedMode: DataCollectionModeStr,
+  selectedMode: AnsweringModeStr,
   expId: '2-1',//'' in production
   expPlan: [],
   data: {}, // answer data
@@ -127,10 +127,9 @@ class App extends Component {
     this.getMachineCheckResultCsv().catch(err=> console.log(err));
     this.getChoices().catch(err => console.log(err));
     this.getRecoveryChoices().catch(err => console.log(err));
-    this.getImgOrder().catch(err => console.log(err));
     await this.getExpPlanCSV(this.state.expId).catch(err => console.log(err));
-    // await this.getImgPath('SMP');
-    // await this.generateReferenceToFile();
+    // for debugging. Need await for getExpPlanCSV
+    await this.handleStartButtonClick()
   }
 
   handleExpIdChange = (event) => {
@@ -180,16 +179,6 @@ class App extends Component {
     });
   };
 
-  getImgOrder = async () => {
-    const res = await axios('./img_order.csv');
-    const data = await res.data;
-    const imgOrder = Papa.parse(data, {
-      header: true,
-      dynamicTyping: true,
-    }).data;
-    this.setState({imgOrder});
-  };
-
   getExpPlanCSV = async (expId) => {
     const res = await axios(`./${expId}.csv`);
     const data = await res.data;
@@ -201,10 +190,11 @@ class App extends Component {
 
   };
 
-  getImgPath = (imgType) => {
+  getImgPath = async (imgType) => {
     this.setState(previousState => {
       try {
         console.log(previousState.subjectId, previousState.nthQuestion);
+        console.log(previousState.expPlan);
         const row = previousState.expPlan.filter((row) => {
           return (row['subjectId'] === String(previousState.subjectId)) &&
             (row['showOnNth'] === String(previousState.nthQuestion));
@@ -358,22 +348,6 @@ class App extends Component {
     });
 
   }
-
-  setImgId = () => {
-    this.setState(previousState => {
-      try {
-        console.log(previousState.subjectId, previousState.nthQuestion);
-        const imgId = previousState.imgOrder.filter((row) => {
-          return (row['user'] === previousState.subjectId) &&
-            (row['show_on_nth'] === previousState.nthQuestion);
-        })[0]['img_id'];
-        return {imgId};
-      } catch (e) {
-        console.log(e);
-        this.setState({end: true});
-      }
-    });
-  };
 
   startTimer = () => {
     clearInterval(this.timer);
