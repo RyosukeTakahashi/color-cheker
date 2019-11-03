@@ -127,8 +127,9 @@ class App extends Component {
     this.getMachineCheckResultCsv().catch(err=> console.log(err));
     this.getChoices().catch(err => console.log(err));
     this.getRecoveryChoices().catch(err => console.log(err));
+    this.getListOfFirebaseStorage();
     await this.getExpPlanCSV(this.state.expId).catch(err => console.log(err));
-    // for debugging. Need await for getExpPlanCSV
+    // For debugging. Need await for getExpPlanCSV
     await this.handleStartButtonClick()
   }
 
@@ -212,8 +213,7 @@ class App extends Component {
     console.log(storage.ref().child('exp021000001').toString());
     storage.ref().child('exp021000001').list().then(function(res) {
       res.prefixes.forEach(function(folderRef) {
-        // All the prefixes under listRef.
-        // You may call listAll() recursively on them.
+        // All the prefixes under listRef. Can listAll() recursively on them.
         console.log(folderRef);
       });
       res.items.forEach(function(itemRef) {
@@ -221,7 +221,6 @@ class App extends Component {
       });
     }).catch(function(error) {
       console.log(error);
-      // Uh-oh, an error occurred!
     });
 
   };
@@ -274,80 +273,8 @@ class App extends Component {
     this.setState({isStarted: true});
     await this.getImgPath('SMP');
     await this.generateReferenceToFile();
-    await this.getListOfFirebaseStorage();
     this.startTimer();
   };
-
-  moveToNextQuestion = async () => {
-    const {
-      data, machineCheckResult, defectTypes,
-      expPlan, imageHeight, imageWidth, imgOrder,
-      recoveryChoices, ...stateWOanswerData
-    } = this.state; // deletes data from state non-destructively
-
-    db.collection('answers_prodcution').add(stateWOanswerData).then(docRef => {
-      console.log('Document written with ID: ', docRef.id);
-    }).catch(error => {
-      console.error('Error adding document: ', error);
-    });
-
-    this.initializeForNextQuestion();
-    // this.setImgId();
-    await this.getImgPath('SMP');
-    await this.generateReferenceToFile();
-    this.startTimer();
-
-  };
-
-  handleButtonClick = () => {
-    console.log('timer stop');
-
-    this.stopTimer();
-    if (this.state.selectedMode === DataCollectionModeStr) {
-      this.moveToNextQuestion();
-    }
-
-    if (this.state.selectedMode === AnsweringModeStr) {
-      switch (this.state.shownView) {
-        case 'Question':
-          this.setState({shownView: 'Answer'});
-          break;
-        case 'Answer':
-          this.moveToNextQuestion();
-          break;
-        default:
-          break;
-      }
-    }
-  };
-
-  handlePanAndZoom(x, y, scale) {
-    this.setState({x, y, scale});
-  }
-
-  handlePanMove(x, y) {
-    this.setState({x, y});
-  }
-
-  handleInitializePosition = () => {
-    this.setState(initialPosition);
-  };
-
-  initializeForNextQuestion() {
-    this.setState(prevState => {
-      this.state.defectTypes.forEach((defectType) => {
-        initializedStateOnButtonClicked[defectType] = false;
-      });
-      this.state.recoveryChoices.forEach((choice) => {
-        initializedStateOnButtonClicked[choice] = false;
-      });
-      initializedStateOnButtonClicked['nthQuestion'] = prevState.nthQuestion +
-        1;
-
-      return initializedStateOnButtonClicked;
-    });
-
-  }
 
   startTimer = () => {
     clearInterval(this.timer);
@@ -371,6 +298,74 @@ class App extends Component {
       return {pauseTimer: !prevState.pauseTimer};
     });
   };
+
+  handlePanAndZoom(x, y, scale) {
+    this.setState({x, y, scale});
+  }
+
+  handlePanMove(x, y) {
+    this.setState({x, y});
+  }
+
+  handleInitializePosition = () => {
+    this.setState(initialPosition);
+  };
+
+  handleNextButtonClick = () => {
+    this.stopTimer();
+    if (this.state.selectedMode === DataCollectionModeStr) {
+      this.moveToNextQuestion();
+    }
+
+    if (this.state.selectedMode === AnsweringModeStr) {
+      switch (this.state.shownView) {
+        case 'Question':
+          this.setState({shownView: 'Answer'});
+          break;
+        case 'Answer':
+          this.moveToNextQuestion();
+          break;
+        default:
+          break;
+      }
+    }
+  };
+
+  moveToNextQuestion = async () => {
+    const {
+      data, machineCheckResult, defectTypes,
+      expPlan, imageHeight, imageWidth, imgOrder,
+      recoveryChoices, ...stateWOanswerData
+    } = this.state; // deletes data from state non-destructively
+
+    db.collection('answers_prodcution').add(stateWOanswerData).then(docRef => {
+      console.log('Document written with ID: ', docRef.id);
+    }).catch(error => {
+      console.error('Error adding document: ', error);
+    });
+
+    this.initializeForNextQuestion();
+    // this.setImgId();
+    await this.getImgPath('SMP');
+    await this.generateReferenceToFile();
+    this.startTimer();
+
+  };
+
+  initializeForNextQuestion() {
+    this.setState(prevState => {
+      this.state.defectTypes.forEach((defectType) => {
+        initializedStateOnButtonClicked[defectType] = false;
+      });
+      this.state.recoveryChoices.forEach((choice) => {
+        initializedStateOnButtonClicked[choice] = false;
+      });
+      initializedStateOnButtonClicked['nthQuestion'] = prevState.nthQuestion +
+        1;
+
+      return initializedStateOnButtonClicked;
+    });
+  }
 
   handleRadioButtonChange = event => {
     this.setState({selectedMode: event.target.value});
@@ -857,7 +852,7 @@ class App extends Component {
                   <div style={{marginTop: 30}}>
                     <Button variant="contained"
                             color={buttonColor}
-                            onClick={this.handleButtonClick}
+                            onClick={this.handleNextButtonClick}
                             disabled={buttonDisable}>
                       {buttonText}
                     </Button>
