@@ -8,6 +8,14 @@ import RadioGroup from '@material-ui/core/RadioGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import FormControl from '@material-ui/core/FormControl';
 import {MuiThemeProvider} from '@material-ui/core/styles';
+import Table from '@material-ui/core/Table/Table';
+import TableHead from '@material-ui/core/TableHead/TableHead';
+import TableRow from '@material-ui/core/TableRow/TableRow';
+import TableCell from '@material-ui/core/TableCell/TableCell';
+import TableBody from '@material-ui/core/TableBody/TableBody';
+import InputLabel from '@material-ui/core/InputLabel';
+import Select from '@material-ui/core/Select/Select';
+import MenuItem from '@material-ui/core/MenuItem/MenuItem';
 
 //imported libraries
 import axios from 'axios';
@@ -23,19 +31,11 @@ import Squares from './Squares';
 import {StyledQuestionNumberText} from './QuestionNumberText';
 import {StyledCorrectOrWrong} from './CorrectOrWrong';
 import {MachineCheckResultTable} from './MachineCheckResultTable';
-import Table from '@material-ui/core/Table/Table';
-import TableHead from '@material-ui/core/TableHead/TableHead';
-import TableRow from '@material-ui/core/TableRow/TableRow';
-import TableCell from '@material-ui/core/TableCell/TableCell';
-import TableBody from '@material-ui/core/TableBody/TableBody';
 import {Checkboxes} from './Checkboxes';
-import InputLabel from '@material-ui/core/InputLabel/InputLabel';
-import Select from '@material-ui/core/Select/Select';
-import MenuItem from '@material-ui/core/MenuItem/MenuItem';
 import RefOrInj from './RefOrInj';
 
 //constants settings
-// import JssProvider from 'react-jss/lib/JssProvider';
+import JssProvider from 'react-jss/lib/JssProvider';
 import {
   AnsweringModeStr,
   AppLayoutGrid,
@@ -48,6 +48,7 @@ import {
   db,
   storage,
   StyledFlexRadioGroup,
+  StyledLeftPaneRadioGroup,
   StyledFormControl,
   StyledFormGroup,
   StyledPaper,
@@ -105,7 +106,7 @@ const appState = Object.assign({
   nthQuestion: 1,
   selectedMode: AnsweringModeStr,
   imgFolderPaths: [],
-  selectedImgFolder: 'exp021000001/20190829_070748___K',
+  selectedImgFolder: 'exp021000001/20190829_070748___K', //exp021000001/20190829_070748___K
   expId: '2-1',//'' in production
   expPlan: [],
   data: {}, // answer data
@@ -492,7 +493,7 @@ class App extends Component {
       return (
         <MenuItem value={path} disabled={settingsFormDisabled}
                   key={index}>{path.replace(
-          'exp021000001/', '')}</MenuItem>
+          'exp021000001/', '').replace('___','')}</MenuItem>
       );
     });
 
@@ -504,12 +505,11 @@ class App extends Component {
           <AppLayoutGrid>
             <LeftPane area='leftPane'>
               <FormControl component="fieldset" className="mode-select">
-                <RadioGroup
+                <StyledLeftPaneRadioGroup
                   aria-label="mode-select"
                   name="mode-select"
                   className="mode-select"
                   value={this.state.selectedMode}
-                  // onChange={this.handleRadioButtonChange}
                   onChange={this.handleChange('selectedMode')}
                 >
                   <FormControlLabel value={DataCollectionModeStr}
@@ -520,7 +520,7 @@ class App extends Component {
                                     control={<Radio/>}
                                     label="問題解答モード"
                                     disabled={settingsFormDisabled}/>
-                </RadioGroup>
+                </StyledLeftPaneRadioGroup>
               </FormControl>
 
               {/*<StyledFormControl>*/}
@@ -568,7 +568,7 @@ class App extends Component {
               {/*</StyledFormControl>*/}
 
               <StyledFormControl>
-                <InputLabel htmlFor="selectImgFolder">フォルダ</InputLabel>
+                <InputLabel>フォルダ</InputLabel>
                 <Select
                   value={this.state.selectedImgFolder}
                   onChange={this.handleChange('selectedImgFolder')}
@@ -597,7 +597,7 @@ class App extends Component {
                 <Button variant="contained"
                         onClick={this.handleStartButtonClick}
                         disabled={settingsFormDisabled}>
-                  {`ID:${this.state.subjectId}の計測を開始する`}
+                  {'計測を開始'}
                 </Button>
               </div>
               }
@@ -792,6 +792,7 @@ class App extends Component {
                         {/*<FormLabel component="legend">モード選択</FormLabel>*/}
                         <StyledFlexRadioGroup
                           aria-label="ok-ng-del"
+                          row
                           name="ok-ng-del"
                           className="ok-ng-del"
                           value={this.state.selectedOkNgDel}
@@ -857,6 +858,7 @@ class App extends Component {
                     <StyledFlexRadioGroup
                       aria-label="ok-ng-del"
                       name="ok-ng-del"
+                      row
                       className="ok-ng-del"
                       value={this.state.selectedConfidence}
                       onChange={this.handleChange('selectedConfidence')}

@@ -1,21 +1,21 @@
 {
-  "defectReason": "defect-checker",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@material-ui/core": "^3.9.2",
-    "@material-ui/icons": "^3.0.1",
-    "axios": "^0.18.0",
-    "firebase": "^7.2.2",
-    "papaparse": "^4.6.3",
+    "@material-ui/core": "latest",
+    "@material-ui/icons": "latest",
+    "axios": "latest",
+    "firebase": "latest",
+    "jss": "^10.0.0",
+    "papaparse": "latest",
     "prop-types": "latest",
-    "react": "^16.6.3",
-    "react-dom": "^16.6.3",
-    "react-flexbox-grid": "^2.1.2",
+    "react": "latest",
+    "react-dom": "latest",
+    "react-flexbox-grid": "latest",
     "react-jss": "^8.6.1",
-    "react-pan-and-zoom-hoc": "^1.3.2",
-    "react-scripts": "^2.1.5",
-    "styled-components": "^4.1.2"
+    "react-pan-and-zoom-hoc": "latest",
+    "react-scripts": "latest",
+    "styled-components": "latest"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -33,6 +33,6 @@
     "not op_mini all"
   ],
   "devDependencies": {
-    "firebase-tools": "^6.5.0"
+    "firebase-tools": "latest"
   }
 }
