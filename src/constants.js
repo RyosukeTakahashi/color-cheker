@@ -68,6 +68,7 @@ export const StyledToolbar = styled(Toolbar)`
 export const StyledFormControl = styled(FormControl)`
 && {
   min-width: 100px;
+  margin-top: 20px;
 }
 `;
 export const StyledTextField = styled(TextField)`

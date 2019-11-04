@@ -62,7 +62,6 @@ import {ExperimentEndMessage} from './ExperimentEndMessage';
 //検出されたやつをとりあえずNGにしてしまう（OKなやつもあるのに）
 
 //Todo
-// フォルダ選べるように
 // 辻くんが生成してくれたjsonデータを呼んで、画像&正解読めるように。
 // 欠点分類を選ぶ→欠点箇所を選ぶを0回以上できるようにする
 
@@ -102,9 +101,11 @@ const initializedStateOnButtonClicked = Object.assign({
 
 const appState = Object.assign({
   subjectId: 1, //0 in production
-  userIdNum: '',
+  userIdNum: '123ABC',
   nthQuestion: 1,
   selectedMode: AnsweringModeStr,
+  imgFolderPaths: [],
+  selectedImgFolder: 'exp021000001/20190829_070748___K',
   expId: '2-1',//'' in production
   expPlan: [],
   data: {}, // answer data
@@ -123,19 +124,23 @@ class App extends Component {
   state = appState;
 
   async componentDidMount() {
-    this.getAnswer().catch(err=> console.log(err));
-    this.getMachineCheckResultCsv().catch(err=> console.log(err));
+    this.getAnswer().catch(err => console.log(err));
+    this.getMachineCheckResultCsv().catch(err => console.log(err));
     this.getChoices().catch(err => console.log(err));
     this.getRecoveryChoices().catch(err => console.log(err));
     this.getListOfFirebaseStorage().catch(err => console.log(err));
+    this.getDownloadUrlsOfImgInFolder().catch(err => console.log(err));
     await this.getExpPlanCSV(this.state.expId).catch(err => console.log(err));
 
-    // For debugging. Need await for getExpPlanCSV
-    // await this.handleStartButtonClick()
-  }
+    //todo: add getImgDownLoadUrls()
 
-  componentWillUnmount() {
-    clearInterval(this.interval);
+    //todo: edit getExpPlanCsv → use list of firebase storage
+    //todo: edit getAnswer → use teacher_patch.json
+    //todo: add transformAnswersToGridSize()
+    //todo: add mergeDefectAnswer()
+
+    // For debugging. Need await for getExpPlanCSV
+    await this.handleStartButtonClick();
   }
 
   getAnswer = async () => {
@@ -147,7 +152,8 @@ class App extends Component {
   getMachineCheckResultCsv = async () => {
     const res = await axios('./sample_dropped.csv');
     const csv = res.data;
-    this.setState({machineCheckResult: Papa.parse(csv, {header: true})['data']})
+    this.setState(
+      {machineCheckResult: Papa.parse(csv, {header: true})['data']});
   };
 
   getChoices = async () => {
@@ -178,18 +184,33 @@ class App extends Component {
       // dynamicTyping: true, //it would make file name change.
     }).data;
     this.setState({expPlan});
+  };
 
+  handleExpIdChange = (event) => {
+    this.setState({expId: event.target.value}, async () => {
+      await this.getExpPlanCSV(this.state.expId).catch(err => console.log(err));
+    });
   };
 
   getListOfFirebaseStorage = async () => {
-    storage.ref().child('exp021000001').list().then(function(res) {
-      res.prefixes.forEach(function(folderRef) {
-        console.log(folderRef);
+    storage.ref().child('exp021000001').list().then((res) => {
+      const imgFolderPaths = res.prefixes.map((folderRef) => {
+        return folderRef.fullPath;
       });
+      this.setState({imgFolderPaths});
       res.items.forEach(function(itemRef) {
         // All the items under listRef.
       });
-    })
+    });
+  };
+
+  getDownloadUrlsOfImgInFolder = async () => {
+    storage.ref(this.state.selectedImgFolder).list().then((res) => {
+      const downloadUrls = res.items.map(itemRef => {
+        return itemRef.getDownloadURL();
+      });
+      console.log(downloadUrls);
+    });
   };
 
   handleStartButtonClick = async () => {
@@ -212,12 +233,6 @@ class App extends Component {
         console.log(e);
         this.setState({end: true});
       }
-    });
-  };
-
-  handleExpIdChange = (event) => {
-    this.setState({expId: event.target.value}, async () => {
-      await this.getExpPlanCSV(this.state.expId).catch(err => console.log(err));
     });
   };
 
@@ -253,6 +268,10 @@ class App extends Component {
     clearInterval(this.timer);
   };
 
+  componentWillUnmount() {
+    clearInterval(this.interval);
+  }
+
   tick = () => {
     if (!this.state.pauseTimer) {
       this.setState(prevState => {
@@ -266,7 +285,6 @@ class App extends Component {
       return {pauseTimer: !prevState.pauseTimer};
     });
   };
-
 
   handleAreaClick = (gridCount) => () => {
     const clickedAreas = () => {
@@ -322,12 +340,13 @@ class App extends Component {
   };
 
   moveToNextQuestion = async () => {
+    // deletes data from state non-destructively and prepare for
+    // uploading stateWOanswerData
     const {
       data, machineCheckResult, defectTypes,
       expPlan, imageHeight, imageWidth, imgOrder,
       recoveryChoices, ...stateWOanswerData
-    } = this.state; // deletes data from state non-destructively
-
+    } = this.state;
     db.collection('answers_prodcution').add(stateWOanswerData).then(docRef => {
       console.log('Document written with ID: ', docRef.id);
     }).catch(error => {
@@ -352,24 +371,17 @@ class App extends Component {
       });
       initializedStateOnButtonClicked['nthQuestion'] = prevState.nthQuestion +
         1;
-
       return initializedStateOnButtonClicked;
     });
   }
 
-  handleOkNgDelRadioButtonChange = event => {
-    this.setState({selectedOkNgDel: event.target.value});
-  };
-  handleConfidenceRadioButtonChange = event => {
-    this.setState({selectedConfidence: event.target.value});
-  };
-  handleCheckboxChange = name => event => {
-    this.setState({[name]: event.target.checked});
-  };
-
   //util functions follow
   handleChange = name => event => {
-    this.setState({[name]: event.target.value,});
+    this.setState({[name]: event.target.value});
+  };
+
+  handleCheckboxChange = name => event => {
+    this.setState({[name]: event.target.checked});
   };
 
   getFilteredState = (raw, allowed) => {
@@ -393,6 +405,7 @@ class App extends Component {
       imageHeight,
       defectTypes,
       recoveryChoices,
+      imgFolderPaths,
       imgId,
       shownView,
       recoveryText,
@@ -478,6 +491,13 @@ class App extends Component {
 
     const settingsFormDisabled = this.state.isStarted;
 
+    const menuItems = imgFolderPaths.map((path, index) => {
+      return (
+        <MenuItem value={path} disabled={settingsFormDisabled} key={index}>{path.replace(
+          'exp021000001/', '')}</MenuItem>
+      );
+    });
+
     return (
       <JssProvider jss={jss} generateClassName={generateClassName}>
 
@@ -505,48 +525,62 @@ class App extends Component {
                 </RadioGroup>
               </FormControl>
 
-              <StyledFormControl>
-                <InputLabel htmlFor="age-simple">実験ID</InputLabel>
-                <Select
-                  value={this.state.expId}
-                  // onChange={this.handleChange('expId')}
-                  onChange={this.handleExpIdChange}
-                  inputProps={{
-                    name: 'expID',
-                    id: 'expID',
-                  }}
-                  disableUnderline={settingsFormDisabled}
-                >
-                  <MenuItem value="" disabled={settingsFormDisabled}>
-                    <em>None</em>
-                  </MenuItem>
-                  <MenuItem value={'2-1'}
-                            disabled={settingsFormDisabled}>2-1</MenuItem>
-                  <MenuItem value={'2-2'}
-                            disabled={settingsFormDisabled}>2-2</MenuItem>
-                </Select>
-              </StyledFormControl>
+              {/*<StyledFormControl>*/}
+              {/*  <InputLabel htmlFor="age-simple">実験ID</InputLabel>*/}
+              {/*  <Select*/}
+              {/*    value={this.state.expId}*/}
+              {/*    onChange={this.handleExpIdChange}*/}
+              {/*    inputProps={{*/}
+              {/*      name: 'expID',*/}
+              {/*      id: 'expID',*/}
+              {/*    }}*/}
+              {/*    disableUnderline={settingsFormDisabled}*/}
+              {/*  >*/}
+              {/*    <MenuItem value="" disabled={settingsFormDisabled}>*/}
+              {/*      <em>None</em>*/}
+              {/*    </MenuItem>*/}
+              {/*    <MenuItem value={'2-1'}*/}
+              {/*              disabled={settingsFormDisabled}>2-1</MenuItem>*/}
+              {/*    <MenuItem value={'2-2'}*/}
+              {/*              disabled={settingsFormDisabled}>2-2</MenuItem>*/}
+              {/*  </Select>*/}
+              {/*</StyledFormControl>*/}
+
+              {/*<StyledFormControl>*/}
+              {/*  <InputLabel htmlFor="age-simple">被験者ID</InputLabel>*/}
+              {/*  <Select*/}
+              {/*    value={this.state.subjectId}*/}
+              {/*    onChange={this.handleChange('subjectId')}*/}
+              {/*    inputProps={{*/}
+              {/*      name: 'subjectID',*/}
+              {/*      id: 'age-simple',*/}
+              {/*    }}*/}
+              {/*    disableUnderline={settingsFormDisabled}*/}
+              {/*  >*/}
+              {/*    <MenuItem value="" disabled={settingsFormDisabled}>*/}
+              {/*      <em>None</em>*/}
+              {/*    </MenuItem>*/}
+              {/*    <MenuItem value={1}*/}
+              {/*              disabled={settingsFormDisabled}>1</MenuItem>*/}
+              {/*    <MenuItem value={2}*/}
+              {/*              disabled={settingsFormDisabled}>2</MenuItem>*/}
+              {/*    <MenuItem value={3}*/}
+              {/*              disabled={settingsFormDisabled}>3</MenuItem>*/}
+              {/*  </Select>*/}
+              {/*</StyledFormControl>*/}
 
               <StyledFormControl>
-                <InputLabel htmlFor="age-simple">被験者ID</InputLabel>
+                <InputLabel htmlFor="selectImgFolder">フォルダ</InputLabel>
                 <Select
-                  value={this.state.subjectId}
-                  onChange={this.handleChange('subjectId')}
+                  value={this.state.selectedImgFolder}
+                  onChange={this.handleChange('selectedImgFolder')}
                   inputProps={{
-                    name: 'subjectID',
-                    id: 'age-simple',
+                    name: 'selectedImgFolder',
+                    id: 'selectedImgFolder',
                   }}
                   disableUnderline={settingsFormDisabled}
                 >
-                  <MenuItem value="" disabled={settingsFormDisabled}>
-                    <em>None</em>
-                  </MenuItem>
-                  <MenuItem value={1}
-                            disabled={settingsFormDisabled}>1</MenuItem>
-                  <MenuItem value={2}
-                            disabled={settingsFormDisabled}>2</MenuItem>
-                  <MenuItem value={3}
-                            disabled={settingsFormDisabled}>3</MenuItem>
+                  {this.state.imgFolderPaths && menuItems}
                 </Select>
               </StyledFormControl>
 
@@ -763,7 +797,7 @@ class App extends Component {
                           name="ok-ng-del"
                           className="ok-ng-del"
                           value={this.state.selectedOkNgDel}
-                          onChange={this.handleOkNgDelRadioButtonChange}
+                          onChange={this.handleChange('selectedOkNgDel')}
                         >
                           <FormControlLabel value={'良品'}
                                             control={<Radio/>}
@@ -827,7 +861,7 @@ class App extends Component {
                       name="ok-ng-del"
                       className="ok-ng-del"
                       value={this.state.selectedConfidence}
-                      onChange={this.handleConfidenceRadioButtonChange}
+                      onChange={this.handleChange('selectedConfidence')}
                     >
                       {Array(10).fill(0).map((e, index) => {
 
