@@ -18,8 +18,6 @@ import MenuItem from '@material-ui/core/MenuItem/MenuItem';
 
 //imported libraries
 import axios from 'axios';
-
-// import firebase from 'firebase/app';
 import 'firebase/firestore';
 import panAndZoomHoc from 'react-pan-and-zoom-hoc';
 import Papa from 'papaparse';
