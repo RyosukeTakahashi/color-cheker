@@ -62,7 +62,6 @@ import {ExperimentEndMessage} from './ExperimentEndMessage';
 //検出されたやつをとりあえずNGにしてしまう（OKなやつもあるのに）
 
 //Todo
-// 辻くんが生成してくれたjsonデータを呼んで、画像&正解読めるように。
 // 欠点分類を選ぶ→欠点箇所を選ぶを0回以上できるようにする
 
 //Todo 優先順位 ３>>４>２>１
@@ -396,6 +395,7 @@ class App extends Component {
       pauseTimer,
       expId,
       imgUrlSmp,
+      imgUrlSmpAns,
       imgUrlRef,
       imgUrlInj,
       showRef,
@@ -650,6 +650,9 @@ class App extends Component {
                       transform: `translate(${(x - 0.5) * imageWidth}px, ${(y -
                         0.5) *
                       imageHeight}px) scale(${1 / scale})`,
+                      backgroundImage: `url(${imgUrlSmp})`,
+                      backgroundRepeat: 'no-repeat',
+                      backgroundSize: 'cover'
                     }}>
                       <Squares gridLength={gridLength}
                                clickedAreas={clickedAreas}
@@ -658,7 +661,7 @@ class App extends Component {
                                imageHeight={imageHeight}
                                imageWidth={imageWidth}
                                imgId={imgId}
-                               imgUrl={imgUrlSmp}
+                               imgUrl={imgUrlSmpAns}
                       />
                     </div>
                   </PannableAndZoomableHOC>
@@ -843,7 +846,7 @@ class App extends Component {
                           <TableBody>
                             <TableRow>
                               <TableCell align='center' component="th">
-                                {this.state.mergedDefects.join(',')}
+                                {"（機能開発中）"}
                               </TableCell>
                               <TableCell align='center'>
                                 {this.state.mergedDefects.join(',')}
