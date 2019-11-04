@@ -4,15 +4,14 @@ import './App.css';
 //Material UI
 import Button from '@material-ui/core/Button';
 import Radio from '@material-ui/core/Radio';
-import RadioGroup from '@material-ui/core/RadioGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import FormControl from '@material-ui/core/FormControl';
 import {MuiThemeProvider} from '@material-ui/core/styles';
-import Table from '@material-ui/core/Table/Table';
-import TableHead from '@material-ui/core/TableHead/TableHead';
-import TableRow from '@material-ui/core/TableRow/TableRow';
-import TableCell from '@material-ui/core/TableCell/TableCell';
-import TableBody from '@material-ui/core/TableBody/TableBody';
+import Table from '@material-ui/core/Table';
+import TableHead from '@material-ui/core/TableHead';
+import TableRow from '@material-ui/core/TableRow';
+import TableCell from '@material-ui/core/TableCell';
+import TableBody from '@material-ui/core/TableBody';
 import InputLabel from '@material-ui/core/InputLabel';
 import Select from '@material-ui/core/Select/Select';
 import MenuItem from '@material-ui/core/MenuItem/MenuItem';
@@ -130,7 +129,7 @@ class App extends Component {
     this.getChoices().catch(err => console.log(err));
     this.getRecoveryChoices().catch(err => console.log(err));
     this.getListOfFirebaseStorage().catch(err => console.log(err));
-    this.getDownloadUrlsOfImgInFolder().catch(err => console.log(err));
+    await this.getDownloadUrlsOfImgInFolder().catch(err => console.log(err));
     await this.getExpPlanCSV(this.state.expId).catch(err => console.log(err));
 
     //todo: add getImgDownLoadUrls()
@@ -209,6 +208,10 @@ class App extends Component {
       });
       this.setState({downloadUrls});
     });
+  };
+
+  getFilteredDownloadUrls = async () => {
+
   };
 
   handleStartButtonClick = async () => {
@@ -320,7 +323,7 @@ class App extends Component {
   handleNextButtonClick = () => {
     this.stopTimer();
     if (this.state.selectedMode === DataCollectionModeStr) {
-      this.moveToNextQuestion();
+      this.moveToNextQuestion().catch();
     }
 
     if (this.state.selectedMode === AnsweringModeStr) {
@@ -329,7 +332,7 @@ class App extends Component {
           this.setState({shownView: 'Answer'});
           break;
         case 'Answer':
-          this.moveToNextQuestion();
+          this.moveToNextQuestion().catch();
           break;
         default:
           break;
@@ -356,7 +359,6 @@ class App extends Component {
     await this.getImgPath('SMP');
     await this.generateReferenceToFile();
     this.startTimer();
-
   };
 
   initializeForNextQuestion() {
