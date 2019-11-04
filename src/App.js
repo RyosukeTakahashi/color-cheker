@@ -35,7 +35,7 @@ import MenuItem from '@material-ui/core/MenuItem/MenuItem';
 import RefOrInj from './RefOrInj';
 
 //constants settings
-import JssProvider from 'react-jss/lib/JssProvider';
+// import JssProvider from 'react-jss/lib/JssProvider';
 import {
   AnsweringModeStr,
   AppLayoutGrid,
@@ -198,9 +198,6 @@ class App extends Component {
         return folderRef.fullPath;
       });
       this.setState({imgFolderPaths});
-      res.items.forEach(function(itemRef) {
-        // All the items under listRef.
-      });
     });
   };
 
@@ -209,7 +206,7 @@ class App extends Component {
       const downloadUrls = res.items.map(itemRef => {
         return itemRef.getDownloadURL();
       });
-      console.log(downloadUrls);
+      this.setState({downloadUrls});
     });
   };
 
@@ -493,7 +490,8 @@ class App extends Component {
 
     const menuItems = imgFolderPaths.map((path, index) => {
       return (
-        <MenuItem value={path} disabled={settingsFormDisabled} key={index}>{path.replace(
+        <MenuItem value={path} disabled={settingsFormDisabled}
+                  key={index}>{path.replace(
           'exp021000001/', '')}</MenuItem>
       );
     });
