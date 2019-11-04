@@ -88,10 +88,3 @@ export const StyledFormGroup = styled(FormGroup)`
 export const StyledLeftPaneRadioGroup = styled(RadioGroup)`
  font-size: 10px;
 `;
-{/*<label*/}
-{/*  className="MuiFormLabel-root MuiInputLabel-root MuiInputLabel-animated MuiInputLabel-shrink MuiFormLabel-filled"*/}
-{/*  data-shrink="true">フォルダ</label>*/}
-
-{/*<label*/}
-{/*  className="MuiFormLabel-root MuiInputLabel-root MuiInputLabel-formControl MuiInputLabel-animated MuiInputLabel-shrink MuiFormLabel-filled"*/}
-{/*  data-shrink="true" htmlFor="userIdNum" id="userIdNum-label">社員番号</label>*/}

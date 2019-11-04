@@ -97,18 +97,19 @@ const initializedStateOnButtonClicked = Object.assign({
   selectedConfidence: 0,
   pauseTimer: false,
   showRef: true,
+  mergedDefects: []
 }, initialPosition);
 
 const appState = Object.assign({
   subjectId: 1, //0 in production
   userIdNum: '123ABC',
-  nthQuestion: 1,
+  nthQuestion: 0,
   selectedMode: AnsweringModeStr,
   imgFolderPaths: [],
   selectedImgFolder: 'exp021000001/20190829_070748___K', //exp021000001/20190829_070748___K
   expId: '2-1',//'' in production
   expPlan: [],
-  data: {}, // answer data
+  correctAnswerJson: {}, // answer data
   defectTypes: ['suji', 'fish'],
   recoveryChoices: [],
   machineCheckResult: [],
@@ -130,23 +131,18 @@ class App extends Component {
     this.getRecoveryChoices().catch(err => console.log(err));
     this.getListOfFirebaseStorage().catch(err => console.log(err));
     await this.getDownloadUrlsOfImgInFolder().catch(err => console.log(err));
-    await this.getExpPlanCSV(this.state.expId).catch(err => console.log(err));
+    await this.getFilteredDownloadUrls().catch(err => console.log(err));
 
-    //todo: add getImgDownLoadUrls()
-
-    //todo: edit getExpPlanCsv → use list of firebase storage
-    //todo: edit getAnswer → use teacher_patch.json
     //todo: add transformAnswersToGridSize()
-    //todo: add mergeDefectAnswer()
 
     // For debugging. Need await for getExpPlanCSV
     await this.handleStartButtonClick();
   }
 
   getAnswer = async () => {
-    const res = await axios('./correct_answers.json');
-    const data = res.data;
-    this.setState({data});
+    const res = await axios('./teacher_patch.json');
+    const correctAnswerJson = res.data;
+    this.setState({correctAnswerJson});
   };
 
   getMachineCheckResultCsv = async () => {
@@ -176,22 +172,6 @@ class App extends Component {
     });
   };
 
-  getExpPlanCSV = async (expId) => {
-    const res = await axios(`./${expId}.csv`);
-    const data = await res.data;
-    const expPlan = Papa.parse(data, {
-      header: true,
-      // dynamicTyping: true, //it would make file name change.
-    }).data;
-    this.setState({expPlan});
-  };
-
-  handleExpIdChange = (event) => {
-    this.setState({expId: event.target.value}, async () => {
-      await this.getExpPlanCSV(this.state.expId).catch(err => console.log(err));
-    });
-  };
-
   getListOfFirebaseStorage = async () => {
     storage.ref().child('exp021000001').list().then((res) => {
       const imgFolderPaths = res.prefixes.map((folderRef) => {
@@ -202,62 +182,64 @@ class App extends Component {
   };
 
   getDownloadUrlsOfImgInFolder = async () => {
-    storage.ref(this.state.selectedImgFolder).list().then((res) => {
-      const downloadUrls = res.items.map(itemRef => {
-        return itemRef.getDownloadURL();
-      });
-      this.setState({downloadUrls});
-    });
+    const res = await storage.ref(this.state.selectedImgFolder).listAll();
+    const items = await res.items;
+    const downloadUrls = await Promise.all(
+      items.map(async item => await item.getDownloadURL()));
+    this.setState({downloadUrls});
   };
 
   getFilteredDownloadUrls = async () => {
+    const imgRefUrls = this.state.downloadUrls.filter(
+      url => url.includes('REF'));
 
+    const imgInjUrls = this.state.downloadUrls.filter(
+      url => url.includes('INJ'));
+
+    const imgSmpUrls = this.state.downloadUrls.filter(
+      url => url.includes('SMP') && (url.includes('ans') === false));
+
+    const imgSmpAnsUrls = this.state.downloadUrls.filter(
+      url => url.includes('SMP') && url.includes('ans'));
+
+    this.setState({imgRefUrls});
+    this.setState({imgInjUrls});
+    this.setState({imgSmpUrls});
+    this.setState({imgSmpAnsUrls});
   };
 
   handleStartButtonClick = async () => {
     this.setState({isStarted: true});
-    await this.getImgPath('SMP');
-    await this.generateReferenceToFile();
+    await this.setImgUrlAndAnswer();
     this.startTimer();
   };
 
-  getImgPath = async (imgType) => {
-    this.setState(previousState => {
-      try {
-        const row = previousState.expPlan.filter((row) => {
-          return (row['subjectId'] === String(previousState.subjectId)) &&
-            (row['showOnNth'] === String(previousState.nthQuestion));
-        })[0];
-        const imgPath = `${row.path1}/${row.path2}/${imgType}${row.path3}.BMP`;
-        return {imgPath};
-      } catch (e) {
-        console.log(e);
-        this.setState({end: true});
-      }
-    });
-  };
+  setImgUrlAndAnswer = () => {
+    const keyName = Object.keys(
+      this.state.correctAnswerJson)[this.state.nthQuestion];
 
-  //reference for google cloud storage
-  generateReferenceToFile = () => {
-    const pathSmp = `${this.state.imgPath.replace('__', '___')}`;
+    const questionImgName = keyName.replace('_ans.png', '').replace('SMP', '');
 
-    if (this.state.expId === '2-1') {
-      const pathInj = pathSmp.replace('SMP', 'INJ');
-      const pathRef = pathSmp.replace('SMP', 'REF');
-      const pathRefInj = storage.ref(pathInj);
-      pathRefInj.getDownloadURL().then(imgUrlInj => {
-        this.setState({imgUrlInj});
-      });
-      const pathRefRef = storage.ref(pathRef);
-      pathRefRef.getDownloadURL().then(imgUrlRef => {
-        this.setState({imgUrlRef});
-      });
-    }
-    const pathRefSmp = storage.ref(pathSmp);
-    pathRefSmp.getDownloadURL().then(imgUrlSmp => {
-      this.setState({imgUrlSmp});
+    const imgUrlInj = this.state.imgInjUrls.filter(
+      url => url.includes(questionImgName))[0];
+    const imgUrlRef = this.state.imgRefUrls.filter(
+      url => url.includes(questionImgName))[0];
+    const imgUrlSmp = this.state.imgSmpUrls.filter(
+      url => url.includes(questionImgName))[0];
+    const imgUrlSmpAns = this.state.imgSmpAnsUrls.filter(
+      url => url.includes(questionImgName))[0];
+    const currentQuestionAnswer = this.state.correctAnswerJson[keyName];
+
+    const mergedDefects = Object.keys(currentQuestionAnswer).filter(defectType => {
+      return currentQuestionAnswer[defectType].length !== 0
     });
 
+    this.setState({imgUrlInj});
+    this.setState({imgUrlRef});
+    this.setState({imgUrlSmp});
+    this.setState({imgUrlSmpAns});
+    this.setState({currentQuestionAnswer});
+    this.setState({mergedDefects});
   };
 
   startTimer = () => {
@@ -344,7 +326,9 @@ class App extends Component {
     // deletes data from state non-destructively and prepare for
     // uploading stateWOanswerData
     const {
-      data, machineCheckResult, defectTypes,
+      correctAnswerJson, currentQuestionAnswer,
+      downloadUrls, imgUrlInj, imgUrlRef, imgUrlSmp, imgUrlSmpAns,
+      machineCheckResult, defectTypes, mergedDefects,
       expPlan, imageHeight, imageWidth, imgOrder,
       recoveryChoices, ...stateWOanswerData
     } = this.state;
@@ -354,10 +338,8 @@ class App extends Component {
       console.error('Error adding document: ', error);
     });
 
-    this.initializeForNextQuestion();
-    // this.setImgId();
-    await this.getImgPath('SMP');
-    await this.generateReferenceToFile();
+    await this.initializeForNextQuestion(); //need await to add 1 to nthQuestion.
+    await this.setImgUrlAndAnswer();
     this.startTimer();
   };
 
@@ -417,6 +399,7 @@ class App extends Component {
       imgUrlRef,
       imgUrlInj,
       showRef,
+      mergedDefects
     } = this.state;
 
     const [pauseButtonColor, pauseButtonText] = (() => {
@@ -457,21 +440,17 @@ class App extends Component {
     ).filter((isChecked) => isChecked).length > 0;
 
     const buttonDisable = (() => {
-
       if (this.state.timeUsed === 0) {
         return true;
       }
-
       if (selectedConfidence === 0) {
         return true;
       } else if (clickedAreas.length === 0) { // 確信度がクリックされ、良品判定しようとしている。
         return false;
       }
-
       if (!isDefectTypeChecked) {
         return true;
       }
-
       if (clickedAreas.length === 0) {
         return false;
       } else {
@@ -479,7 +458,6 @@ class App extends Component {
           isRecoveryActionChecked;
         return !recoveryAnswered;
       }
-
     })();
 
     const paneDisplay = (() => {
@@ -495,9 +473,13 @@ class App extends Component {
       return (
         <MenuItem value={path} disabled={settingsFormDisabled}
                   key={index}>{path.replace(
-          'exp021000001/', '').replace('___','')}</MenuItem>
+          'exp021000001/', '').replace('___', '')}</MenuItem>
       );
     });
+
+    const isCorrect = !mergedDefects.map(defectType => {
+      return this.state[defectType]
+    }).includes(false);
 
     return (
       <JssProvider jss={jss} generateClassName={generateClassName}>
@@ -524,50 +506,6 @@ class App extends Component {
                                     disabled={settingsFormDisabled}/>
                 </StyledLeftPaneRadioGroup>
               </FormControl>
-
-              {/*<StyledFormControl>*/}
-              {/*  <InputLabel htmlFor="age-simple">実験ID</InputLabel>*/}
-              {/*  <Select*/}
-              {/*    value={this.state.expId}*/}
-              {/*    onChange={this.handleExpIdChange}*/}
-              {/*    inputProps={{*/}
-              {/*      name: 'expID',*/}
-              {/*      id: 'expID',*/}
-              {/*    }}*/}
-              {/*    disableUnderline={settingsFormDisabled}*/}
-              {/*  >*/}
-              {/*    <MenuItem value="" disabled={settingsFormDisabled}>*/}
-              {/*      <em>None</em>*/}
-              {/*    </MenuItem>*/}
-              {/*    <MenuItem value={'2-1'}*/}
-              {/*              disabled={settingsFormDisabled}>2-1</MenuItem>*/}
-              {/*    <MenuItem value={'2-2'}*/}
-              {/*              disabled={settingsFormDisabled}>2-2</MenuItem>*/}
-              {/*  </Select>*/}
-              {/*</StyledFormControl>*/}
-
-              {/*<StyledFormControl>*/}
-              {/*  <InputLabel htmlFor="age-simple">被験者ID</InputLabel>*/}
-              {/*  <Select*/}
-              {/*    value={this.state.subjectId}*/}
-              {/*    onChange={this.handleChange('subjectId')}*/}
-              {/*    inputProps={{*/}
-              {/*      name: 'subjectID',*/}
-              {/*      id: 'age-simple',*/}
-              {/*    }}*/}
-              {/*    disableUnderline={settingsFormDisabled}*/}
-              {/*  >*/}
-              {/*    <MenuItem value="" disabled={settingsFormDisabled}>*/}
-              {/*      <em>None</em>*/}
-              {/*    </MenuItem>*/}
-              {/*    <MenuItem value={1}*/}
-              {/*              disabled={settingsFormDisabled}>1</MenuItem>*/}
-              {/*    <MenuItem value={2}*/}
-              {/*              disabled={settingsFormDisabled}>2</MenuItem>*/}
-              {/*    <MenuItem value={3}*/}
-              {/*              disabled={settingsFormDisabled}>3</MenuItem>*/}
-              {/*  </Select>*/}
-              {/*</StyledFormControl>*/}
 
               <StyledFormControl>
                 <InputLabel>フォルダ</InputLabel>
@@ -892,9 +830,7 @@ class App extends Component {
                       <StyledPaper>
                         <StyledToolbar>
                           回答結果： <StyledCorrectOrWrong
-                          isCorrect={JSON.stringify(
-                            this.state.data[this.state.nthQuestion]['answers']) ===
-                          JSON.stringify(clickedAreas)}
+                          isCorrect={isCorrect}
                           className='styled-correct'/>
                         </StyledToolbar>
                         <Table>
@@ -907,11 +843,10 @@ class App extends Component {
                           <TableBody>
                             <TableRow>
                               <TableCell align='center' component="th">
-                                {this.state.data[nthQuestion]['answers'].join(
-                                  ',')}
+                                {this.state.mergedDefects.join(',')}
                               </TableCell>
                               <TableCell align='center'>
-                                {this.state.data[nthQuestion]['reason']}
+                                {this.state.mergedDefects.join(',')}
                               </TableCell>
                             </TableRow>
                           </TableBody>
